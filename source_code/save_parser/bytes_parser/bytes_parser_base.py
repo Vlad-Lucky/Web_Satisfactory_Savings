@@ -7,6 +7,9 @@ class BytesParserBase:
         self.base_file_path = file_path
         self.bytes = bytearray(open(self.base_file_path, 'rb').read())
 
+    def reset_offset(self):
+        self.offset = 0
+
     def save(self, file_path: str = None):
         if file_path is None:
             file_path = self.base_file_path
