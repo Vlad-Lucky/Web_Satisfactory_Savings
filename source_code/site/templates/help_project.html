@@ -5,7 +5,7 @@
     <p>{% if current_user.is_authenticated %}You are authorized{% else %}You are not authorized{% endif %}</p>
     <form method="post" class="container text-center">
       {% if action == "generate" %}
-        <p><input type="number" class="form-control" name="amount" placeholder="Summa of rubles"><p/>
+        <p><input type="number" class="form-control" name="amount" placeholder="Summa of rubles" min="20" max="99999"><p/>
         <p><input type="submit" name="generate" value="Generate payload"><p/>
       {% else %}
         <p><a href="{{payload}}" name="a">Pay payload</a><p/>

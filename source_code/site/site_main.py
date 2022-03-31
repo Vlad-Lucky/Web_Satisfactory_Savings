@@ -123,7 +123,7 @@ def help_project_check(bill_id, invoice_uid):
                                                           privilege_id=PRIVILEGES['contributor'])
                         db_sess.add(user2privilege)
                     db_sess.commit()
-                    payload_message += '. You have got the role in discord.'
+                    payload_message += '. You have already got the role in discord.'
         return render_template(
             'help_project.html', action='check', payload=f'https://oplata.qiwi.com/form/?invoice_uid={invoice_uid}',
             payload_message=payload_message, not_load_help_project_footer=True)
