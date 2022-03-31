@@ -1,18 +1,19 @@
 import datetime
 import sqlalchemy
+from flask_login import UserMixin
 from .db_session import SqlAlchemyBase
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-class Users(SqlAlchemyBase):
+class Users(SqlAlchemyBase, UserMixin):
     __tablename__ = 'users'
 
-    user_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     discord = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     login = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     saving_rights = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     registration_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
+    hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
