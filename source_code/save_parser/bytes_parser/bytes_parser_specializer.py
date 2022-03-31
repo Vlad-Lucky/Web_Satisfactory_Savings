@@ -2,6 +2,7 @@ from typing import Union
 from source_code.save_parser.bytes_parser.bytes_parser_base import BytesParserBase
 
 
+# bytes parser, специализированный на отдельных типах
 class BytesParserSpecializer(BytesParserBase):
     def read_int32(self, change_offset=True) -> int:
         return self.read_int(4, change_offset=change_offset)

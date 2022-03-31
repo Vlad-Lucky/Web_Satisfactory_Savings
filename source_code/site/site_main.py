@@ -1,20 +1,16 @@
 import os
-
-import flask
+from flask import redirect
+from source_code.data import db_session
+from source_code.data.users import Users
 from flask import Flask, render_template, request
+from source_code.data.privileges import Privileges
+from source_code.site.forms import RegisterForm, SigninForm
+from source_code.data.users2privileges import Users2Privileges
+from source_code.misc.payment import make_session, QiwiPaymentStatus
+from source_code.constants import PRIVILEGES, SITE_SECRET_KEY, INFO_DB_PATH
+from source_code.misc.payment_generation import generate_help_project_payload
 from flask_login import current_user, LoginManager, login_user, login_required, logout_user
 
-from source_code.constants import PRIVILEGES, SITE_SECRET_KEY, INFO_DB_PATH
-from source_code.data import db_session
-from source_code.data.privileges import Privileges
-from source_code.data.users2privileges import Users2Privileges
-from source_code.data.users import Users
-import requests
-from flask import redirect
-
-from source_code.misc.payment import make_session, QiwiPaymentStatus
-from source_code.misc.payment_generation import generate_help_project_payload
-from source_code.site.forms import RegisterForm, SigninForm
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -55,11 +51,13 @@ def signin():
     form = SigninForm()
     if form.validate_on_submit():
         if form.login_submit.data:
+            # пользователь логинится благодаря логину
             db_sess = db_session.create_session()
             user = db_sess.query(Users).filter(Users.login == form.login.data).first()
             login_user(user, remember=form.login_remember_me.data)
             return redirect("/")
         elif form.discord_submit.data:
+            # пользователь логинится благодаря дискорду
             db_sess = db_session.create_session()
             user = db_sess.query(Users).filter(Users.discord == form.discord_login.data).first()
             login_user(user, remember=form.discord_remember_me.data)
@@ -105,6 +103,7 @@ def help_project_check(bill_id, invoice_uid):
             payload_message = 'No such payload'
         else:
             status = response['status']['value']
+            # проверка статуса платежа
             payload_message = 'No payload answer'
             if status == QiwiPaymentStatus.WAITING.value:
                 payload_message = 'Payload is waiting for pay'
