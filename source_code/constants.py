@@ -11,3 +11,5 @@ QIWI_TIME_TO_PAY = dt.timedelta(minutes=5)
 PRIVILEGES = {'contributor': 1}
 
 SITE_URL = 'http://127.0.0.1:8080/'
+SITE_SECRET_KEY = '<secret key>'
+INFO_DB_PATH = "source_code/db/info.db"

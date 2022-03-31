@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container text-center">
+  <h2>Sign in</h2>
+</div>
+<div class="container centerized_horizontal">
+  <div class="">
+    <form action="" method="post" class="container row" novalidate>
+      {{form.hidden_tag()}}
+      <div class="col-sm-8 container text-center form-center">
+        <h4>Login</h4>
+        <p>
+          {{form.login(class="form-control", placeholder=form.login.label.text)}}
+          {% for error in form.login.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+          {% endfor %}
+        </p>
+        <p>
+          {{form.login_password(class="form-control", placeholder=form.login_password.label.text)}}
+          {% for error in form.login_password.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+          {% endfor %}
+        </p>
+        <p>{{form.login_remember_me()}} {{form.login_remember_me.label}}</p>
+        <p>{{form.login_submit(type="submit", class="btn btn-primary")}}</p>
+      </div>
+      <div class="col-sm-8 container text-center form-center">
+        <h4>Discord</h4>
+        <p>
+          {{form.discord_login(class="form-control", placeholder=form.discord_login.label.text)}}
+          {% for error in form.discord_login.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+          {% endfor %}
+        </p>
+        <p>
+          {{form.discord_password(class="form-control", placeholder=form.discord_password.label.text)}}
+          {% for error in form.discord_password.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+          {% endfor %}
+        </p>
+        <p>{{form.discord_remember_me()}} {{form.discord_remember_me.label}}</p>
+        <p>{{form.discord_submit(type="submit", class="btn btn-primary")}}</p>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

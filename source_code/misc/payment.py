@@ -5,7 +5,7 @@ from enum import Enum
 from source_code.constants import QIWI_MAX_LEN_PAYMENT_LINK, QIWI_PAYMENT_AVAILABLE_SYMBOLS, QIWI_SECRET_KEY
 
 
-class PaymentStatus(Enum):
+class QiwiPaymentStatus(Enum):
     WAITING = 'WAITING'
     PAID = 'PAID'
     REJECTED = 'REJECTED'
