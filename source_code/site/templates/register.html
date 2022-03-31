@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    <form action="" method="post" class="container text-center form-center" novalidate>
+      {{form.hidden_tag()}}
+      <h2>Registration</h2>
+      <p>
+        {{form.login(class="form-control", placeholder=form.login.label.text)}}
+        {% for error in form.login.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.discord_login(class="form-control", placeholder=form.discord_login.label.text)}}
+        {% for error in form.discord_login.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.password(class="form-control", placeholder=form.password.label.text)}}
+        {% for error in form.password.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.repeat_password(class="form-control", placeholder=form.repeat_password.label.text)}}
+        {% for error in form.repeat_password.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>{{form.remember_me()}} {{form.remember_me.label}}</p>
+      <p>{{form.submit(type="submit", class="btn btn-primary")}}</p>
+    </form>
+  </div>
+{% endblock %}
