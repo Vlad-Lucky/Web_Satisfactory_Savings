@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <footer class="text-center pt-3">
+    <p>After helping project you will get "contributor" role in discord. If you are not authorized I recommend you to do this else you will not get the role and will be anonymous.<p/>
+    <p>{% if current_user.is_authenticated %}You are authorized{% else %}You are not authorized{% endif %}</p>
+    <form method="post" class="container text-center">
+      {% if action == "generate" %}
+        <p><input type="number" class="form-control" name="amount" placeholder="Summa of rubles"><p/>
+        <p><input type="submit" name="generate" value="Generate payload"><p/>
+      {% else %}
+        <p><a href="{{payload}}" name="a">Pay payload</a><p/>
+        <p><input type="submit" name="check" value="Check payload"><p/>
+        <p>{{payload_message}}<p/>
+      {% endif %}
+    </form>
+  </footer>
+{% endblock %}

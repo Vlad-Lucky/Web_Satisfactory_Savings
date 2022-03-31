@@ -1,0 +1,99 @@
+.red {
+   background-color: red;
+}
+.grey {
+   background-color: grey;
+}
+.gray {
+   background-color: gray;
+}
+.blue {
+   background-color: blue;
+}
+.green {
+   background-color: green;
+}
+.orange {
+   background-color: orange;
+}
+.white {
+   background-color: white;
+}
+.purple {
+   background-color: purple;
+}
+.pink {
+   background-color: pink;
+}
+.lightpink {
+   background-color: rgb(255, 228, 225);
+}
+.lightred {
+   background-color: indianred;
+}
+.lightblue {
+   background-color: lightblue;
+}
+.lightgray {
+   background-color: lightgray;
+}
+.lightgrey {
+   background-color: lightgrey;
+}
+.lightgreen {
+   background-color: lightgreen;
+}
+.lightorange {
+   background-color: lightcoral;
+}
+
+
+
+.lightorange_color {
+   color: lightcoral;
+}
+.lightgreen_color {
+   color: lightgreen;
+}
+.lightgrey_color {
+   color: lightgrey;
+}
+.lightgray_color {
+   color: lightgray;
+}
+.lightblue_color {
+   color: lightblue;
+}
+.lightred_color {
+   color: indianred;
+}
+.white_color {
+   color: white;
+}
+.orange_color {
+   color: orange;
+}
+.red_color {
+   color: red;
+}
+.blue_color {
+   color: blue;
+}
+.grey_color {
+   color: grey;
+}
+.gray_color {
+   color: gray;
+}
+.green_color {
+   color: green;
+}
+.purple_color {
+   color: purple;
+}
+.pink_color {
+   color: pink;
+}
+.lightpink_color {
+   color: rgb(255, 228, 225);
+}
