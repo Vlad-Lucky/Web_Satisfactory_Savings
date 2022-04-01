@@ -1,7 +1,9 @@
 import datetime
 import sqlalchemy
+from . import db_session
 from flask_login import UserMixin
 from .db_session import SqlAlchemyBase
+from .users2privileges import Users2Privileges
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -24,3 +26,10 @@ class Users(SqlAlchemyBase, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.hashed_password, password)
+
+    @property
+    def privileges(self) -> list:
+        session = db_session.create_session()
+        res = session.query(Users2Privileges).filter(Users2Privileges.user_id == 1)
+        res = [elem.privilege for elem in res]
+        return list(res)
