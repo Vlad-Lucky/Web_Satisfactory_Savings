@@ -7,8 +7,8 @@ QIWI_PUBLIC_KEY = '<Qiwi public key>'
 QIWI_SECRET_KEY = '<Qiwi secret key>'
 QIWI_TIME_TO_PAY = dt.timedelta(minutes=5)
 
-# short_name: privilege_id
-PRIVILEGES = {'contributor': 1}
+# prenamed privileges
+PRIVILEGES = ['contributor', 'session_creator']
 
 SITE_URL = 'http://127.0.0.1:8080/'
 SITE_SECRET_KEY = '<secret key>'

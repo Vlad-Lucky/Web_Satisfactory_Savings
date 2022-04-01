@@ -7,10 +7,11 @@ from source_code.data.privileges import Privileges
 from source_code.site.forms import RegisterForm, SigninForm
 from source_code.data.users2privileges import Users2Privileges
 from source_code.misc.payment import make_session, QiwiPaymentStatus
-from source_code.constants import PRIVILEGES, SITE_SECRET_KEY, INFO_DB_PATH
+from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
 from source_code.misc.payment_generation import generate_help_project_payload
 from flask_login import current_user, LoginManager, login_user, login_required, logout_user
 
+from source_code.site.site_errors import NOT_ALLOWED
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -25,7 +26,15 @@ def load_user(user_id):
 @app.route('/')
 @app.route('/index/')
 def index():
-    return render_template('base.html')
+    return render_template('index.html')
+
+
+@app.route('/sessions/add', methods=['GET', 'POST'])
+@login_required
+def sessions_add():
+    if not any([privilege.key_name == 'session_creator' for privilege in current_user.privileges]):
+        return render_template('error.html', **NOT_ALLOWED)
+    return render_template('register.html', form=form)
 
 
 @app.route('/register/', methods=['GET', 'POST'])
@@ -116,11 +125,12 @@ def help_project_check(bill_id, invoice_uid):
                 # добавление привилегии контрибьютора пользователю
                 if current_user.is_authenticated:
                     db_sess = db_session.create_session()
+                    contributor_id = db_sess.query(Privileges).filter(Privileges.key_name == 'contributor').privilege_id
                     if not any(db_sess.query(Users2Privileges).filter(
                             Users2Privileges.user_id == current_user.id and
-                            Users2Privileges.privilege_id == PRIVILEGES['contributor'])):
+                            Users2Privileges.privilege.key_name == 'contributor')):
                         user2privilege = Users2Privileges(user_id=current_user.id,
-                                                          privilege_id=PRIVILEGES['contributor'])
+                                                          privilege_id=contributor_id)
                         db_sess.add(user2privilege)
                     db_sess.commit()
                     payload_message += '. You have already got the role in discord.'
@@ -138,8 +148,12 @@ def run():
     db_session.global_init(INFO_DB_PATH)
     if not cond:
         session = db_session.create_session()
-        privilege = Privileges(privilege_id=PRIVILEGES['contributor'], name='Contributor', is_displaying=True)
+
+        privilege = Privileges(key_name='contributor', name='Contributor', is_displaying=True)
         session.add(privilege)
+        privilege = Privileges(key_name='session_creator', name='Session Creator', is_displaying=False)
+        session.add(privilege)
+
         session.commit()
 
     login_manager.init_app(app)
