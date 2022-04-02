@@ -1,8 +1,18 @@
 from flask_wtf import FlaskForm
-from wtforms.validators import DataRequired
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from flask_wtf.file import FileAllowed
+from wtforms.validators import DataRequired, Length
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, FileField
 from source_code.site.validators import signin_validator, registration_discord_validator, \
-    registration_password_equal_validator, registration_login_validator
+    registration_password_equal_validator, registration_login_validator, correct_sav_headers_validator
+
+
+class SessionAddForm(FlaskForm):
+    session_name = StringField('Session name', validators=[DataRequired(), Length(min=1, max=24)])
+    session_description = StringField('Session description', validators=[DataRequired(), Length(min=0, max=192)])
+    saving = FileField("Saving", validators=[DataRequired(), FileAllowed(['sav']), correct_sav_headers_validator])
+    photo = FileField("Photo", validators=[DataRequired(),
+                                           FileAllowed(['jpg', 'jpeg', 'png', 'bmp', 'JPG', 'JPEG', 'PNG', 'BMP'])])
+    submit = SubmitField('Submit')
 
 
 class SigninForm(FlaskForm):

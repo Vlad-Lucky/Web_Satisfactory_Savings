@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    <form action="" method="post" class="container text-center form-center" novalidate>
+      {{form.hidden_tag()}}
+      <h2>Add session</h2>
+      <p>
+        {{form.session_name(class="form-control", placeholder=form.session_name.label.text)}}
+        {% for error in form.session_name.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.session_description(class="form-control", placeholder=form.session_description.label.text)}}
+        {% for error in form.session_description.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.saving(class="form-control", placeholder=form.saving.label.text)}}
+        {% for error in form.saving.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.photo(class="form-control", placeholder=form.photo.label.text)}}
+        {% for error in form.photo.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>{{form.submit(type="submit", class="btn btn-primary")}}</p>
+    </form>
+  </div>
+{% endblock %}

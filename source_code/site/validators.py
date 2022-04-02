@@ -1,6 +1,16 @@
+from werkzeug.utils import secure_filename
 from wtforms import ValidationError
 from source_code.data import db_session
 from source_code.data.users import Users
+
+
+# проверка sav файла на правильность содержания заголовков
+def correct_sav_headers_validator(form, field):
+    try:
+        filename = secure_filename(field.data.filename)
+        form.file.data.save('source_code/db/trash/' + filename)
+    except Exception:
+        raise ValidationError("File .sav is incorrect")
 
 
 # проверка зарегестрированного пользователя по логину

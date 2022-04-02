@@ -4,8 +4,7 @@ from source_code.data import db_session
 from source_code.data.users import Users
 from flask import Flask, render_template, request
 from source_code.data.privileges import Privileges
-from source_code.site.forms import RegisterForm, SigninForm
-from source_code.data.users2privileges import Users2Privileges
+from source_code.site.forms import RegisterForm, SigninForm, SessionAddForm
 from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
 from source_code.misc.payment_generation import generate_help_project_payload
@@ -34,7 +33,11 @@ def index():
 def sessions_add():
     if not any([privilege.key_name == 'session_creator' for privilege in current_user.privileges]):
         return render_template('error.html', **NOT_ALLOWED)
-    return render_template('register.html', form=form)
+    form = SessionAddForm()
+    if form.validate_on_submit():
+        # smth to do
+        pass
+    return render_template('sessions_add.html', form=form)
 
 
 @app.route('/register/', methods=['GET', 'POST'])
@@ -87,7 +90,13 @@ def help_project():
     if request.method == 'POST':
         if 'generate' not in request.form:
             return render_template('help_project.html', action='generate', not_load_help_project_footer=True)
-        amount = int(request.form['amount'])
+
+        # проверка на amount=str
+        try:
+            amount = int(request.form['amount'])
+        except ValueError:
+            return render_template('help_project.html', action='generate', not_load_help_project_footer=True)
+
         if current_user.is_authenticated:
             payload = generate_help_project_payload(amount, for_user_id=current_user.id)
         else:
@@ -125,13 +134,10 @@ def help_project_check(bill_id, invoice_uid):
                 # добавление привилегии контрибьютора пользователю
                 if current_user.is_authenticated:
                     db_sess = db_session.create_session()
-                    contributor_id = db_sess.query(Privileges).filter(Privileges.key_name == 'contributor').privilege_id
-                    if not any(db_sess.query(Users2Privileges).filter(
-                            Users2Privileges.user_id == current_user.id and
-                            Users2Privileges.privilege.key_name == 'contributor')):
-                        user2privilege = Users2Privileges(user_id=current_user.id,
-                                                          privilege_id=contributor_id)
-                        db_sess.add(user2privilege)
+                    privilege_contributor = db_sess.query(Privileges).filter(
+                        Privileges.key_name == 'contributor').first()
+                    user = db_sess.query(Users).filter(Users.id == current_user.id).first()
+                    user.privileges.append(privilege_contributor)
                     db_sess.commit()
                     payload_message += '. You have already got the role in discord.'
         return render_template(
