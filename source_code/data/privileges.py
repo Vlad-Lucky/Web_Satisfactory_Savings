@@ -7,10 +7,8 @@ from .db_session import SqlAlchemyBase
 users2privileges = sqlalchemy.Table(
     'users2privileges',
     SqlAlchemyBase.metadata,
-    sqlalchemy.Column('users', sqlalchemy.Integer,
-                      sqlalchemy.ForeignKey('users.id')),
-    sqlalchemy.Column('privileges', sqlalchemy.Integer,
-                      sqlalchemy.ForeignKey('privileges.privilege_id'))
+    sqlalchemy.Column('users', sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id')),
+    sqlalchemy.Column('privileges', sqlalchemy.Integer, sqlalchemy.ForeignKey('privileges.privilege_id'))
 )
 
 

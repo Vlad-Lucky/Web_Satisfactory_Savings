@@ -5,7 +5,7 @@ from .db_session import SqlAlchemyBase
 
 
 class Savings(SqlAlchemyBase):
-    __tablename__ = 'all_savings'
+    __tablename__ = 'savings'
 
     saving_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     owner_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=True)
