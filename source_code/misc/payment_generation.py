@@ -3,8 +3,8 @@ from source_code.data import db_session
 from source_code.data.bills import Bills
 from source_code.data.privileges import Privileges
 from source_code.constants import QIWI_TIME_TO_PAY, PRIVILEGES
-from source_code.misc.payment import make_session, unconvert_from_payment_dt, check_uniqueness_bill_id, \
-    generate_uniqueness_bill_id
+from source_code.misc.generating_ids import check_uniqueness_bill_id, generate_uniqueness_bill_id
+from source_code.misc.payment import make_session, unconvert_from_payment_dt
 
 
 # генерация платежа для помощи проекту
