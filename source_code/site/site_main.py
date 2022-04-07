@@ -1,10 +1,19 @@
 import os
+import shutil
+
 from flask import redirect
+from werkzeug.utils import secure_filename
+
 from source_code.data import db_session
+from source_code.data.savings import Savings
+from source_code.data.sessions import Sessions
 from source_code.data.users import Users
 from flask import Flask, render_template, request
 from source_code.data.privileges import Privileges
-from source_code.site.forms import RegisterForm, SigninForm, SessionAddForm
+from source_code.misc.generating_ids import generate_filename
+from source_code.save_parser.bytes_parser import BytesParserSpecializer
+from source_code.save_parser.satisfactory_save import get_data
+from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm
 from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
 from source_code.misc.payment_generation import generate_help_project_payload
@@ -33,10 +42,48 @@ def index():
 def sessions_add():
     if not any([privilege.key_name == 'session_creator' for privilege in current_user.privileges]):
         return render_template('error.html', **NOT_ALLOWED)
-    form = SessionAddForm()
+    form = SessionsAddForm()
     if form.validate_on_submit():
-        # smth to do
-        pass
+        # сохранение всего как ненужное для промежуточного анализа
+        saving_path_secured = secure_filename(form.saving.data.filename)
+        saving_path = generate_filename(
+            'source_code/db/trash/adding_sessions/savings', f'{current_user.id}_{saving_path_secured}')
+        form.saving.data.save(saving_path)
+
+        photo_path_secured = secure_filename(form.photo.data.filename)
+        photo_path = generate_filename(
+            'source_code/db/trash/adding_sessions/photos', f'{current_user.id}_{photo_path_secured}')
+        form.photo.data.save(photo_path)
+
+        # проверка на правильность сохранения
+        try:
+            sav_parser = BytesParserSpecializer(saving_path)
+            get_data(sav_parser)
+        except Exception:
+            form.saving.errors.append('Sav file is incorrect')
+            return render_template('sessions_add.html', form=form)
+
+        # если всё нормально, то перемещаем их
+        new_saving_path = generate_filename('source_code/db/all_savings/savings', f'{saving_path_secured}')
+        shutil.move(saving_path, new_saving_path)
+        new_photo_path = generate_filename('source_code/db/all_savings/photos', f'{photo_path_secured}')
+        shutil.move(photo_path, new_photo_path)
+
+        # добавляем сессию в активные
+        db_sess = db_session.create_session()
+        saving = Savings(owner_id=current_user.id, name=form.session_name.data,
+                         description=form.session_description.data, saving_path=new_saving_path,
+                         photo_path=new_photo_path)
+        db_sess.add(saving)
+        db_sess.commit()
+
+        session = Sessions(saving_id=saving.saving_id)
+        db_sess.add(session)
+        db_sess.commit()
+
+        db_sess.close()
+
+        return redirect('/')
     return render_template('sessions_add.html', form=form)
 
 
@@ -52,6 +99,7 @@ def register():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
+        db_sess.close()
 
         login_user(user, remember=form.remember_me.data)
         return redirect("/")
@@ -139,6 +187,7 @@ def help_project_check(bill_id, invoice_uid):
                     user = db_sess.query(Users).filter(Users.id == current_user.id).first()
                     user.privileges.append(privilege_contributor)
                     db_sess.commit()
+                    db_sess.close()
                     payload_message += '. You have already got the role in discord.'
         return render_template(
             'help_project.html', action='check', payload=f'https://oplata.qiwi.com/form/?invoice_uid={invoice_uid}',
@@ -153,14 +202,15 @@ def run():
     cond = os.path.exists(INFO_DB_PATH)
     db_session.global_init(INFO_DB_PATH)
     if not cond:
-        session = db_session.create_session()
+        db_sess = db_session.create_session()
 
         privilege = Privileges(key_name='contributor', name='Contributor', is_displaying=True)
-        session.add(privilege)
+        db_sess.add(privilege)
         privilege = Privileges(key_name='session_creator', name='Session Creator', is_displaying=False)
-        session.add(privilege)
+        db_sess.add(privilege)
 
-        session.commit()
+        db_sess.commit()
+        db_sess.close()
 
     login_manager.init_app(app)
     app.config['SECRET_KEY'] = SITE_SECRET_KEY

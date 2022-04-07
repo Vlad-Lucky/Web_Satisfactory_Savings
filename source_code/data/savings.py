@@ -5,12 +5,14 @@ from .db_session import SqlAlchemyBase
 
 
 class Savings(SqlAlchemyBase):
-    __tablename__ = 'savings'
+    __tablename__ = 'all_savings'
 
     saving_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     owner_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=True)
-    saving_file = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    info = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
+    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    description = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    saving_path = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    photo_path = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     upload_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 
     owner = orm.relation("Users")
