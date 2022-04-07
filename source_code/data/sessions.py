@@ -17,6 +17,10 @@ class Sessions(SqlAlchemyBase):
     session_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
     saving_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("savings.saving_id"), nullable=True)
     creator_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=True)
+    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    description = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    photo_path = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    is_active = sqlalchemy.Column(sqlalchemy.Boolean, nullable=True)
 
-    saving = orm.relation('Savings')
     creator = orm.relation('Users')
+    savings = orm.relation("Savings", secondary="sessions2savings", backref="sessions")
