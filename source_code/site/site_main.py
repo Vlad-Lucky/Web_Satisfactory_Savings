@@ -1,8 +1,13 @@
 import os
 import shutil
+from io import BytesIO
 
 from flask import redirect
+from flask_wtf import FlaskForm
+from sqlalchemy.orm import Session
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
+from wtforms.validators import DataRequired
 
 from source_code.data import db_session
 from source_code.data.savings import Savings
@@ -13,28 +18,93 @@ from source_code.data.privileges import Privileges
 from source_code.misc.generating_ids import generate_filename
 from source_code.save_parser.bytes_parser import BytesParserSpecializer
 from source_code.save_parser.satisfactory_save import get_data
-from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm
+from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm, SessionsChoosingEditingForm, \
+    SessionsEditForm
 from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
 from source_code.misc.payment_generation import generate_help_project_payload
 from flask_login import current_user, LoginManager, login_user, login_required, logout_user
 
-from source_code.site.site_errors import NOT_ALLOWED
+from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND
 
 app = Flask(__name__)
 login_manager = LoginManager()
+load_user_session = Session()
 
 
 @login_manager.user_loader
 def load_user(user_id):
-    db_sess = db_session.create_session()
-    return db_sess.query(Users).filter(Users.id == user_id).first()
+    return load_user_session.query(Users).filter(Users.id == user_id).first()
 
 
 @app.route('/')
 @app.route('/index/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/sessions/edit/<int:session_id>', methods=['GET', 'POST'])
+@login_required
+def sessions_edit(session_id):
+    if not any([session.session_id == session_id for session in current_user.sessions]):
+        return render_template('error.html', **NOT_ALLOWED)
+    changing = request.args.get('changing', default=None, type=str)
+    # если в строке есть запрос, какие данные изменять, то предъявляем форму изменения данных
+    if changing is not None:
+        try:
+            changing = changing.split(',')
+            # делаем так, что указанные изменяемые данные - обязательны
+            if not any(changing) or any([elem not in ['name', 'description', 'photo'] for elem in changing]):
+                return render_template('error.html', **NOT_FOUND)
+            form = SessionsEditForm()
+            if 'name' in changing:
+                form.session_name.validators.append(DataRequired())
+            if 'description' in changing:
+                form.session_description.validators.append(DataRequired())
+            if 'photo' in changing:
+                form.session_photo.validators.append(DataRequired())
+            if form.validate_on_submit():
+                # изменяем иформацию о сохранении
+                db_sess = db_session.create_session()
+                session = db_sess.query(Sessions).filter(Sessions.session_id == session_id).first()
+
+                # сохранение всё как ненужное для промежуточного анализа
+                if form.session_photo.data:
+                    photo_path_secured = secure_filename(form.session_photo.data.filename)
+                    photo_path = generate_filename(
+                        'source_code/db/trash/adding_sessions/photos', f'{current_user.id}_{photo_path_secured}')
+                    form.session_photo.data.save(photo_path)
+                    # если всё нормально, то перемещаем их
+                    new_photo_path = generate_filename(
+                        'source_code/db/all_savings/photos', f'{current_user.id}_{photo_path_secured}')
+                    shutil.move(photo_path, new_photo_path)
+
+                    session.photo_path = new_photo_path
+                if form.session_name.data:
+                    session.name = form.session_name.data
+                if form.session_description.data:
+                    session.description = form.session_description.data
+                db_sess.commit()
+                db_sess.close()
+
+                return redirect('/')
+            return render_template('sessions_edit.html', form=form, changing=changing)
+        except Exception:
+            return render_template('error.html', **NOT_FOUND)
+    # иначе форму выбора данных
+    form = SessionsChoosingEditingForm()
+    if form.validate_on_submit():
+        # перенапрвляем в такую следующую ссылку, где есть указанные пользователем изменяемые данные
+        changing = []
+        if form.change_session_name.data:
+            changing.append('name')
+        if form.change_session_description.data:
+            changing.append('description')
+        if form.change_session_photo.data:
+            changing.append('photo')
+        if any(changing):
+            return redirect(f'/sessions/edit/{session_id}?changing={",".join(changing)}')
+    return render_template('sessions_choosing_editing.html', form=form)
 
 
 @app.route('/sessions/add', methods=['GET', 'POST'])
@@ -50,10 +120,10 @@ def sessions_add():
             'source_code/db/trash/adding_sessions/savings', f'{current_user.id}_{saving_path_secured}')
         form.saving.data.save(saving_path)
 
-        photo_path_secured = secure_filename(form.photo.data.filename)
+        photo_path_secured = secure_filename(form.session_photo.data.filename)
         photo_path = generate_filename(
             'source_code/db/trash/adding_sessions/photos', f'{current_user.id}_{photo_path_secured}')
-        form.photo.data.save(photo_path)
+        form.session_photo.data.save(photo_path)
 
         # проверка на правильность сохранения
         try:
@@ -64,24 +134,30 @@ def sessions_add():
             return render_template('sessions_add.html', form=form)
 
         # если всё нормально, то перемещаем их
-        new_saving_path = generate_filename('source_code/db/all_savings/savings', f'{saving_path_secured}')
+        new_saving_path = generate_filename(
+            'source_code/db/all_savings/savings', f'{current_user.id}_{saving_path_secured}')
         shutil.move(saving_path, new_saving_path)
-        new_photo_path = generate_filename('source_code/db/all_savings/photos', f'{photo_path_secured}')
+        new_photo_path = generate_filename(
+            'source_code/db/all_savings/photos', f'{current_user.id}_{photo_path_secured}')
         shutil.move(photo_path, new_photo_path)
 
         # добавляем сессию в активные
         db_sess = db_session.create_session()
-        saving = Savings(owner_id=current_user.id, name=form.session_name.data,
-                         description=form.session_description.data, saving_path=new_saving_path,
-                         photo_path=new_photo_path)
+        saving = Savings(owner_id=current_user.id, saving_path=new_saving_path)
         db_sess.add(saving)
         db_sess.commit()
 
-        session = Sessions(saving_id=saving.saving_id)
+        session = Sessions(saving_id=saving.saving_id, creator_id=current_user.id,
+                           description=form.session_description.data, photo_path=new_photo_path,
+                           name=form.session_name.data)
+        session.savings.append(saving)
         db_sess.add(session)
         db_sess.commit()
 
         db_sess.close()
+
+        current_user.sessions.append(session)
+        load_user_session.commit()
 
         return redirect('/')
     return render_template('sessions_add.html', form=form)
@@ -99,9 +175,8 @@ def register():
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
-        db_sess.close()
-
         login_user(user, remember=form.remember_me.data)
+        db_sess.close()
         return redirect("/")
     return render_template('register.html', form=form)
 
@@ -199,6 +274,7 @@ def help_project_check(bill_id, invoice_uid):
 
 
 def run():
+    global load_user_session
     cond = os.path.exists(INFO_DB_PATH)
     db_session.global_init(INFO_DB_PATH)
     if not cond:
@@ -213,5 +289,6 @@ def run():
         db_sess.close()
 
     login_manager.init_app(app)
+    load_user_session = db_session.create_session()
     app.config['SECRET_KEY'] = SITE_SECRET_KEY
     app.run(host='127.0.0.1', port=8080)

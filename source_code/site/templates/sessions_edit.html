@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    <form enctype="multipart/form-data" action="" method="post" class="container text-center form-center" novalidate>
+      {{form.hidden_tag()}}
+      <h2>Edit session</h2>
+      {% if "name" in changing %}
+        <p>
+          {{form.session_name(class="form-control", placeholder=form.session_name.label.text)}}
+          {% for error in form.session_name.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+          {% endfor %}
+        </p>
+      {% endif %}
+      {% if "description" in changing %}
+        <p>
+          {{form.session_description(class="form-control", placeholder=form.session_description.label.text)}}
+          {% for error in form.session_description.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+          {% endfor %}
+        </p>
+      {% endif %}
+      {% if "photo" in changing %}
+        <p>
+          <div class="form-control">
+            {{form.session_photo.label}}
+            {{form.session_photo}}
+          </div>
+          {% for error in form.session_photo.errors %}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+          {% endfor %}
+        </p>
+      {% endif %}
+      <p>{{form.submit(type="submit", class="btn btn-primary")}}</p>
+    </form>
+  </div>
+{% endblock %}

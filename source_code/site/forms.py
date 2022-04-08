@@ -6,12 +6,27 @@ from source_code.site.validators import signin_validator, registration_discord_v
     registration_password_equal_validator, registration_login_validator
 
 
+class SessionsChoosingEditingForm(FlaskForm):
+    change_session_name = BooleanField('Change session name')
+    change_session_description = BooleanField('Change session description')
+    change_session_photo = BooleanField('Change session photo')
+    submit = SubmitField('Next')
+
+
+class SessionsEditForm(FlaskForm):
+    session_name = StringField('Session name', validators=[Length(min=1, max=24)])
+    session_description = StringField('Session description', validators=[Length(min=0, max=192)])
+    session_photo = FileField(
+        "Photo", validators=[FileAllowed(['jpg', 'jpeg', 'png', 'bmp', 'JPG', 'JPEG', 'PNG', 'BMP'])])
+    submit = SubmitField('Change')
+
+
 class SessionsAddForm(FlaskForm):
     session_name = StringField('Session name', validators=[DataRequired(), Length(min=1, max=24)])
     session_description = StringField('Session description', validators=[DataRequired(), Length(min=0, max=192)])
     saving = FileField("Saving", validators=[DataRequired(), FileAllowed(['sav'])])
-    photo = FileField("Photo", validators=[DataRequired(),
-                                           FileAllowed(['jpg', 'jpeg', 'png', 'bmp', 'JPG', 'JPEG', 'PNG', 'BMP'])])
+    session_photo = FileField(
+        "Photo", validators=[DataRequired(), FileAllowed(['jpg', 'jpeg', 'png', 'bmp', 'JPG', 'JPEG', 'PNG', 'BMP'])])
     submit = SubmitField('Submit')
 
 

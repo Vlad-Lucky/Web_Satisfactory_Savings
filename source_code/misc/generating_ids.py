@@ -8,6 +8,8 @@ from source_code.constants import FILE_ID_AVAILABLE_SYMBOLS, FILE_ID_MAX_LEN, QI
 # генерация файла с уникальным id
 def generate_filename(folder: str, base_filename: str):
     file_id = None
+    if not os.path.exists(folder):
+        os.makedirs(folder)
     while file_id is None or f'{file_id}_{base_filename}' in os.listdir(folder):
         file_id = ''
         for _ in range(random.randint(1, FILE_ID_MAX_LEN)):

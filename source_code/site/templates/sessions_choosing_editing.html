@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    <form enctype="multipart/form-data" action="" method="post" class="container text-center" novalidate>
+      {{form.hidden_tag()}}
+      <br>
+      <h2>What parameters have to be changed?</h2>
+      <p>
+        <div>
+          {{form.change_session_name.label}}&nbsp;&nbsp;&nbsp;&nbsp;
+          {{form.change_session_name}}
+        </div>
+        {% for error in form.change_session_name.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        <div>
+          {{form.change_session_description.label}}&nbsp;&nbsp;&nbsp;&nbsp;
+          {{form.change_session_description}}
+        </div>
+        {% for error in form.change_session_description.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        <div>
+          {{form.change_session_photo.label}}&nbsp;&nbsp;&nbsp;&nbsp;
+          {{form.change_session_photo}}
+        </div>
+        {% for error in form.change_session_photo.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>{{form.submit(type="submit", class="btn btn-primary")}}</p>
+    </form>
+  </div>
+{% endblock %}
