@@ -34,6 +34,15 @@ class BytesParserBase:
         string_len = self.read_int(num_bytes_len, change_offset=False)
         self.delete_bytes(string_len + num_bytes_len)
 
+    def write_bytes(self, bytes: bytearray, change_offset=True):
+        """добавление байт"""
+        if len(bytes) == 0:
+            return
+        for byte in bytes:
+            self.bytes.insert(self.offset, byte)
+        if change_offset:
+            self.offset += len(bytes)
+
     def write_int(self, num: int, num_bytes: int, change_offset=True):
         """добавление числа"""
         if num_bytes == 0:
@@ -57,6 +66,15 @@ class BytesParserBase:
         if change_offset:
             self.offset += num_bytes_len + len(string)
 
+    def replace_bytes(self, bytes: bytearray, change_offset=True):
+        """переписывание байт"""
+        if len(bytes) == 0:
+            return
+        for i, byte in enumerate(bytes):
+            self.bytes[self.offset + i] = byte
+        if change_offset:
+            self.offset += len(bytes)
+
     def replace_int(self, num: int, num_bytes: int, change_offset=True):
         """переписывание числа"""
         if num_bytes == 0:
@@ -74,6 +92,13 @@ class BytesParserBase:
         self.write_string(string, num_bytes_len, change_offset=False)
         if change_offset:
             self.offset += num_bytes_len + len(string)
+
+    def read_bytes(self, num_bytes: int, change_offset=True) -> bytearray:
+        """чтение байт"""
+        res = self.bytes[self.offset:self.offset + num_bytes]
+        if change_offset:
+            self.offset += num_bytes
+        return res
 
     def read_int(self, num_bytes: int, change_offset=True) -> int:
         """чтение числа"""
