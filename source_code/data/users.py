@@ -1,9 +1,13 @@
 import datetime
+
+import rsa
 import sqlalchemy
 from sqlalchemy import orm
 from flask_login import UserMixin
 from .db_session import SqlAlchemyBase
 from werkzeug.security import generate_password_hash, check_password_hash
+
+from ..constants import PASSWORDS_CIPHER_PRIVATE, PASSWORDS_CIPHER_PUBLIC
 
 
 class Users(SqlAlchemyBase, UserMixin):
@@ -14,7 +18,7 @@ class Users(SqlAlchemyBase, UserMixin):
     login = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     saving_rights = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     registration_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
-    hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    hashed_password = sqlalchemy.Column(sqlalchemy.LargeBinary, nullable=True)
 
     privileges = orm.relation("Privileges", secondary="users2privileges", backref="users")
     sessions = orm.relation("Sessions", secondary="users2sessions", backref="users")
@@ -23,8 +27,9 @@ class Users(SqlAlchemyBase, UserMixin):
         super().__init__(*args, **kwargs)
         self.hashed_password = None
 
-    def set_password(self, password):
-        self.hashed_password = generate_password_hash(password)
+    def set_password(self, password: str):
+        self.hashed_password = rsa.encrypt(password.encode('utf-8'), PASSWORDS_CIPHER_PUBLIC)
 
-    def check_password(self, password):
-        return check_password_hash(self.hashed_password, password)
+    def check_password(self, password: str):
+        decrypted = rsa.decrypt(self.hashed_password, PASSWORDS_CIPHER_PRIVATE).decode('utf-8')
+        return decrypted == password
