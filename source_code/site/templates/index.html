@@ -12,14 +12,14 @@
             <p>
               <small class="text-muted">Creator`s discord: {{session.creator.discord}}</small><br>
               <small class="text-muted">Creator`s login: {{session.creator.login}}</small><br>
-              <small class="text-muted">Last upload date: {{session.savings[0].upload_date.strftime("%Y-%m-%d %H:%M")}}</small>
+              <small class="text-muted">Last upload date: {{session.savings[-1].upload_date.strftime("%Y-%m-%d %H:%M")}}</small>
             </p>
             <div class="btn-group">
               <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('load_saving_inp_{{session.session_id}}').click()">Load new saving</button>
               <form action="" enctype="multipart/form-data" method="post" novalidate>
                 <input type="file" name="load_saving_inp_{{session.session_id}}" id="load_saving_inp_{{session.session_id}}" onchange="this.form.submit()" hidden>
               </form>
-              <a href="{{url_for('source_code', filename=session.savings[0].saving_path)}}" download>
+              <a href="{{url_for('source_code', filename=session.savings[-1].saving_path)}}" download>
                 <button type="button" class="btn btn-sm btn-outline-secondary">Download saving</button>
               </a>
             </div>
@@ -38,10 +38,12 @@
             {% endif %}
           </div>
         </div>
-        {% for error in errors %}
-          <div class="alert alert-danger" role="alert">
-            {{error}}
-          </div>
+        {% for error in session_errors %}
+          {% if error["session_id"] == session.session_id %}
+            <div class="alert alert-danger" role="alert">
+              {{error["text"]}}
+            </div>
+          {% endif %}
         {% endfor %}
       </div>
     {% endfor %}

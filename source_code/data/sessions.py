@@ -15,7 +15,6 @@ class Sessions(SqlAlchemyBase):
     __tablename__ = 'sessions'
 
     session_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
-    saving_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("savings.saving_id"), nullable=True)
     creator_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     description = sqlalchemy.Column(sqlalchemy.String, nullable=True)

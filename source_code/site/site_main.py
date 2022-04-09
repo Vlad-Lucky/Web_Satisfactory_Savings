@@ -19,7 +19,7 @@ from flask import Flask, render_template, request
 from source_code.data.privileges import Privileges
 from source_code.misc.generating_ids import generate_filename
 from source_code.save_parser.bytes_parser import BytesParserSpecializer
-from source_code.save_parser.satisfactory_save import get_data
+from source_code.save_parser.satisfactory_save_parser import SatisfactorySaveParser
 from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm, SessionsChoosingEditingForm, \
     SessionsEditForm
 from source_code.misc.payment import make_session, QiwiPaymentStatus
@@ -61,14 +61,42 @@ def load_user(user_id):
 def index():
     db_sess = db_session.create_session()
     sessions = db_sess.query(Sessions)
-    sessions_id = [session.session_id for session in sessions]
+    sessions_ids = [session.session_id for session in sessions]
+    errors = []
     if request.method == 'POST':
+        # получение тега name у file_input`ов, id сессий которых ЕСТЬ в активных сессиях
         names = [elem for elem in request.files
                  if elem.startswith('load_saving_inp_') and elem[len('load_saving_inp_'):].isdigit()
-                 and int(elem[len('load_saving_inp_'):]) in sessions_id]
+                 and int(elem[len('load_saving_inp_'):]) in sessions_ids]
         for name in names:
+            session_id = int(name[len('load_saving_inp_'):])
+            session = sessions.filter(Sessions.session_id == session_id).first()
+            # сохраняем файл как ненужное
             file = request.files[name]
-            # do something
+            saving_path = generate_filename('source_code/db/trash/adding_sessions/savings')
+            file.save(saving_path)
+            # проверка на правильность сохранения
+            sav_parser1 = SatisfactorySaveParser(session.savings[-1].saving_path)
+            sav_parser2 = SatisfactorySaveParser(saving_path)
+            if not sav_parser2.is_correct_save():
+                errors.append({'session_id': session_id, 'text': 'Sav file is incorrect'})
+                break
+            if not sav_parser1.is_next_save(saving_path):
+                errors.append(
+                    {'session_id': session_id,
+                     'text': 'Seems like you were not playing on this save or save is not the next after current'})
+                break
+            # если всё нормально, то перемещаем его
+            new_saving_path = generate_filename('source_code/db/all_savings/savings')
+            shutil.move(saving_path, new_saving_path)
+            # добавляем сессию в активные
+            saving = Savings(owner_id=current_user.id, saving_path=new_saving_path)
+            db_sess.add(saving)
+            db_sess.commit()
+
+            session.savings.append(saving)
+            db_sess.commit()
+    db_sess.close()
     return render_template('index.html', sessions=sessions)
 
 
@@ -101,11 +129,11 @@ def sessions_edit(session_id):
                 if form.session_photo.data:
                     photo_path_secured = secure_filename(form.session_photo.data.filename)
                     photo_path = generate_filename(
-                        'source_code/db/trash/adding_sessions/photos', f'{current_user.id}_{photo_path_secured}')
+                        'source_code/db/trash/adding_sessions/photos', f'{photo_path_secured}')
                     form.session_photo.data.save(photo_path)
                     # если всё нормально, то перемещаем их
                     new_photo_path = generate_filename(
-                        'source_code/db/all_savings/photos', f'{current_user.id}_{photo_path_secured}')
+                        'source_code/db/all_savings/photos', f'{photo_path_secured}')
                     shutil.move(photo_path, new_photo_path)
 
                     session.photo_path = new_photo_path
@@ -152,19 +180,15 @@ def sessions_add():
         form.session_photo.data.save(photo_path)
 
         # проверка на правильность сохранения
-        try:
-            sav_parser = BytesParserSpecializer(saving_path)
-            get_data(sav_parser)
-        except Exception:
+        sav_parser = SatisfactorySaveParser(saving_path)
+        if not sav_parser.is_correct_save():
             form.saving.errors.append('Sav file is incorrect')
             return render_template('sessions_add.html', form=form)
 
         # если всё нормально, то перемещаем их
-        new_saving_path = generate_filename(
-            'source_code/db/all_savings/savings', f'{current_user.id}_{saving_path_secured}')
+        new_saving_path = generate_filename('source_code/db/all_savings/savings')
         shutil.move(saving_path, new_saving_path)
-        new_photo_path = generate_filename(
-            'source_code/db/all_savings/photos', f'{current_user.id}_{photo_path_secured}')
+        new_photo_path = generate_filename('source_code/db/all_savings/photos', f'{photo_path_secured}')
         shutil.move(photo_path, new_photo_path)
 
         # добавляем сессию в активные
@@ -173,9 +197,8 @@ def sessions_add():
         db_sess.add(saving)
         db_sess.commit()
 
-        session = Sessions(saving_id=saving.saving_id, creator_id=current_user.id,
-                           description=form.session_description.data, photo_path=new_photo_path,
-                           name=form.session_name.data)
+        session = Sessions(creator_id=current_user.id, description=form.session_description.data,
+                           photo_path=new_photo_path, name=form.session_name.data)
         session.savings.append(saving)
         db_sess.add(session)
         db_sess.commit()
@@ -313,7 +336,6 @@ def run():
 
         db_sess.commit()
         db_sess.close()
-
     login_manager.init_app(app)
     load_user_session = db_session.create_session()
     app.config['SECRET_KEY'] = SITE_SECRET_KEY
