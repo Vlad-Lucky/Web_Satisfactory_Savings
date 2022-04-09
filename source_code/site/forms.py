@@ -6,6 +6,10 @@ from source_code.site.validators import signin_validator, registration_discord_v
     registration_password_equal_validator, registration_login_validator
 
 
+class SessionsLoadNewSavingForm(FlaskForm):
+    new_saving = FileField(validators=[FileAllowed(['sav'])])
+
+
 class SessionsChoosingEditingForm(FlaskForm):
     change_session_name = BooleanField('Change session name')
     change_session_description = BooleanField('Change session description')
@@ -43,8 +47,9 @@ class SigninForm(FlaskForm):
 
 
 class RegisterForm(FlaskForm):
-    login = StringField('Login', validators=[DataRequired(), registration_login_validator])
-    discord_login = StringField('<discord_name>#<tag>', validators=[DataRequired(), registration_discord_validator])
+    login = StringField('Login', validators=[DataRequired(), Length(min=0, max=42), registration_login_validator])
+    discord_login = StringField(
+        '<discord_name>#<tag>', validators=[DataRequired(), Length(min=0, max=42), registration_discord_validator])
     password = PasswordField('Password', validators=[DataRequired()])
     repeat_password = PasswordField('Repeat password',
                                     validators=[DataRequired(), registration_password_equal_validator])

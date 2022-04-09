@@ -1,39 +1,50 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="py-5 container text-center">
+<div class="py-5 container text-center" xmlns="http://www.w3.org/1999/html">
   <div class="row row-cols-2 g-3">
-    <div class="py-2 col-md-6">
-      <div class="card shadow-sm text-center session-card">
-        <img width="100%" height="200" src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.sciencephoto.com%2Fimage%2Fc0066486%2F800wm%2FC0066486-Racoon.jpg&f=1&nofb=1">
-        <div class="card-body">
-          <b class="card-text">ШШШШШШШШШШШШШШШШШШШШШШШШШ</b>
-          <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-          <div class="d-flex justify-content-between align-items-center">
+    {% for session in sessions %}
+      <div class="py-2 col-md-6">
+        <div class="card shadow-sm text-center session-card">
+          <img width="100%" height="200" src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.sciencephoto.com%2Fimage%2Fc0066486%2F800wm%2FC0066486-Racoon.jpg&f=1&nofb=1">
+          <div class="card-body">
+            <b class="card-text">{{session.name}}</b>
+            <p class="card-text">{{session.description}}</p>
+            <p>
+              <small class="text-muted">Creator`s discord: {{session.creator.discord}}</small><br>
+              <small class="text-muted">Creator`s login: {{session.creator.login}}</small><br>
+              <small class="text-muted">Last upload date: {{session.savings[0].upload_date.strftime("%Y-%m-%d %H:%M")}}</small>
+            </p>
             <div class="btn-group">
-              <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('load_saving_inp_{{session.session_id}}').click()">Load new saving</button>
+              <form action="" enctype="multipart/form-data" method="post" novalidate>
+                <input type="file" name="load_saving_inp_{{session.session_id}}" id="load_saving_inp_{{session.session_id}}" onchange="this.form.submit()" hidden>
+              </form>
+              <a href="{{url_for('source_code', filename=session.savings[0].saving_path)}}" download>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Download saving</button>
+              </a>
             </div>
-            <small class="text-muted">2022-03-31 12:28</small>
+            <div class="btn-group">
+              <a href="sessions/info/set/{{session.session_id}}">
+                <button type="button" class="btn btn-sm btn-outline-secondary">Set saving info</button>
+              </a>
+              <a href="sessions/info/show/{{session.session_id}}">
+                <button type="button" class="btn btn-sm btn-outline-secondary">Show saving info</button>
+              </a>
+            </div>
+            {% if session.creator_id == current_user.id %}
+              <form action="/sessions/edit/{{session.session_id}}">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Edit</button>
+              </form>
+            {% endif %}
           </div>
         </div>
-      </div>
-    </div>
-    <div class="py-2 col-md-6">
-      <div class="card shadow-sm text-center session-card">
-        <img width="100%" height="200" src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.hdnicewallpapers.com%2FWalls%2FBig%2FDog%2FFree_Download_Image_of_Lovely_Dog_Puppy.jpg&f=1&nofb=1">
-        <div class="card-body">
-          <b class="card-text">ШШШШШШШШШШШШШШШШШШШШШШШШШ</b>
-          <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="btn-group">
-              <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-            </div>
-            <small class="text-muted">2022-03-31 12:28</small>
+        {% for error in errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
           </div>
-        </div>
+        {% endfor %}
       </div>
-    </div>
+    {% endfor %}
   </div>
   {% if current_user.is_authenticated %}
     {% for privilege in current_user.privileges %}

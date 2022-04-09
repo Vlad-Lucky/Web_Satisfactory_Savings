@@ -1,8 +1,10 @@
 import os
 import shutil
+import typing
 from io import BytesIO
 
-from flask import redirect
+from flask import redirect, url_for, send_from_directory
+from flask.helpers import get_root_path
 from flask_wtf import FlaskForm
 from sqlalchemy.orm import Session
 from werkzeug.datastructures import FileStorage
@@ -24,10 +26,27 @@ from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
 from source_code.misc.payment_generation import generate_help_project_payload
 from flask_login import current_user, LoginManager, login_user, login_required, logout_user
-
 from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND
 
-app = Flask(__name__)
+
+# метод для получения файлов из корневой папки source_code
+def source_code_url_rule(filename, cut_source_code=True):
+    value = app.send_file_max_age_default
+    if value is None:
+        max_age = None
+    else:
+        max_age = int(value.total_seconds())
+    filename = filename.replace('\\', '/')
+    if cut_source_code:
+        filename = filename.lstrip('source_code').lstrip('/')
+    return send_from_directory('', filename, max_age=max_age)
+
+
+app = Flask(__name__, root_path=f'{get_root_path("")}/source_code',
+            template_folder='site/templates', static_folder='site/static')
+# добавление правила из корневой папки source_code
+app.add_url_rule(f'/source_code/<path:filename>', endpoint='source_code', view_func=source_code_url_rule)
+
 login_manager = LoginManager()
 load_user_session = Session()
 
@@ -37,10 +56,20 @@ def load_user(user_id):
     return load_user_session.query(Users).filter(Users.id == user_id).first()
 
 
-@app.route('/')
-@app.route('/index/')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    db_sess = db_session.create_session()
+    sessions = db_sess.query(Sessions)
+    sessions_id = [session.session_id for session in sessions]
+    if request.method == 'POST':
+        names = [elem for elem in request.files
+                 if elem.startswith('load_saving_inp_') and elem[len('load_saving_inp_'):].isdigit()
+                 and int(elem[len('load_saving_inp_'):]) in sessions_id]
+        for name in names:
+            file = request.files[name]
+            # do something
+    return render_template('index.html', sessions=sessions)
 
 
 @app.route('/sessions/edit/<int:session_id>', methods=['GET', 'POST'])
@@ -115,14 +144,11 @@ def sessions_add():
     form = SessionsAddForm()
     if form.validate_on_submit():
         # сохранение всего как ненужное для промежуточного анализа
-        saving_path_secured = secure_filename(form.saving.data.filename)
-        saving_path = generate_filename(
-            'source_code/db/trash/adding_sessions/savings', f'{current_user.id}_{saving_path_secured}')
+        saving_path = generate_filename('source_code/db/trash/adding_sessions/savings')
         form.saving.data.save(saving_path)
 
         photo_path_secured = secure_filename(form.session_photo.data.filename)
-        photo_path = generate_filename(
-            'source_code/db/trash/adding_sessions/photos', f'{current_user.id}_{photo_path_secured}')
+        photo_path = generate_filename('source_code/db/trash/adding_sessions/photos', f'{photo_path_secured}')
         form.session_photo.data.save(photo_path)
 
         # проверка на правильность сохранения
