@@ -95,18 +95,6 @@ def index():
     return render_template('index.html', sessions=sessions)
 
 
-@app.route('/sessions/info/show/<int:session_id>')
-@login_required
-def sessions_info_show(session_id):
-    db_sess = db_session.create_session()
-    session = db_sess.query(Sessions).filter(Sessions.session_id == session_id).first()
-    info = session.info
-    db_sess.close()
-    if not session.is_online:
-        return render_template('error.html', **SESSION_IS_OFFLINE)
-    return render_template('sessions_info_show.html', info=info)
-
-
 # перевод сессии в оффлайн
 @app.route('/sessions/info/offline/<int:session_id>')
 @login_required
