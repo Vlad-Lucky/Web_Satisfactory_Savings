@@ -16,6 +16,7 @@ class Savings(SqlAlchemyBase):
     __tablename__ = 'savings'
 
     saving_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True, autoincrement=True)
+    # владелец сохранения
     owner_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("users.id"), nullable=True)
     saving_path = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     upload_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
