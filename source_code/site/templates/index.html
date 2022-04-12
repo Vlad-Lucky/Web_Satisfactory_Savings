@@ -24,8 +24,6 @@
               <a href="{{url_for('source_code', filename=session.savings[-1].saving_path)}}" download>
                 <button type="button" class="btn btn-sm btn-outline-secondary">Download saving</button>
               </a>
-            </div>
-            <div class="btn-group">
               {% if not session.is_online %}
                 <a href="sessions/info/online/{{session.session_id}}">
                   <button type="button" class="btn btn-sm btn-outline-secondary">Turn online</button>
@@ -35,9 +33,11 @@
                   <button type="button" class="btn btn-sm btn-outline-secondary">Turn offline</button>
                 </a>
               {% endif %}
-              <a href="sessions/info/show/{{session.session_id}}">
-                <button type="button" class="btn btn-sm btn-outline-secondary">Show session  info</button>
-              </a>
+              {% if session.is_online %}
+                <a href="sessions/info/show/{{session.session_id}}">
+                  <button type="button" class="btn btn-sm btn-outline-secondary">Show session info</button>
+                </a>
+              {% endif %}
             </div>
             {% if session.creator_id == current_user.id %}
               <form action="/sessions/edit/{{session.session_id}}">

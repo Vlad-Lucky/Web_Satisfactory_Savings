@@ -1,32 +1,25 @@
 import os
 import shutil
-import typing
-from io import BytesIO
-
-from flask import redirect, url_for, send_from_directory
-from flask.helpers import get_root_path
-from flask_wtf import FlaskForm
 from sqlalchemy.orm import Session
-from werkzeug.datastructures import FileStorage
-from werkzeug.utils import secure_filename
-from wtforms.validators import DataRequired, StopValidation
-
 from source_code.data import db_session
+from flask.helpers import get_root_path
+from source_code.data.users import Users
+from werkzeug.utils import secure_filename
+from wtforms.validators import DataRequired
 from source_code.data.savings import Savings
 from source_code.data.sessions import Sessions
-from source_code.data.users import Users
+from flask import redirect, send_from_directory
 from flask import Flask, render_template, request
 from source_code.data.privileges import Privileges
 from source_code.misc.generating_ids import generate_filename
-from source_code.save_parser.bytes_parser import BytesParserSpecializer
+from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
+from source_code.misc.payment import make_session, QiwiPaymentStatus
+from source_code.misc.payment_generation import generate_help_project_payload
+from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND, SESSION_IS_OFFLINE
 from source_code.save_parser.satisfactory_save_parser import SatisfactorySaveParser
+from flask_login import current_user, LoginManager, login_user, login_required, logout_user
 from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm, SessionsChoosingEditingForm, \
     SessionsEditForm, SessionOnlineForm
-from source_code.misc.payment import make_session, QiwiPaymentStatus
-from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
-from source_code.misc.payment_generation import generate_help_project_payload
-from flask_login import current_user, LoginManager, login_user, login_required, logout_user
-from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND, SESSION_IS_ALREADY_ONLINE
 
 
 # метод для получения файлов из корневой папки source_code
@@ -105,7 +98,13 @@ def index():
 @app.route('/sessions/info/show/<int:session_id>')
 @login_required
 def sessions_info_show(session_id):
-    pass
+    db_sess = db_session.create_session()
+    session = db_sess.query(Sessions).filter(Sessions.session_id == session_id).first()
+    info = session.info
+    db_sess.close()
+    if not session.is_online:
+        return render_template('error.html', **SESSION_IS_OFFLINE)
+    return render_template('sessions_info_show.html', info=info)
 
 
 # перевод сессии в оффлайн
@@ -148,7 +147,7 @@ def sessions_info_online(session_id):
         db_sess.close()
         return redirect('/')
     db_sess.close()
-    return render_template('sessions_info_set.html', form=form)
+    return render_template('sessions_info_online.html', form=form)
 
 
 @app.route('/sessions/edit/<int:session_id>', methods=['GET', 'POST'])

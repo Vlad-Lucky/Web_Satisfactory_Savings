@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    <form method="get" class="container text-center form-center">
+      <h2>Session info</h2>
+      <p>Game session id: {{info["game_session_id"]}}</p>
+      {% if info["game_session_type"] == "1" %}
+        <p>Game session type: Friends only</p>
+        <p>Owner`s platform: {{info["owner_platform"]}}</p>
+        <p>Owner`s account on this platform: {{info["owner_account_name"]}}</p>
+      {% else %}
+        <p>Game session type: Private</p>
+      {% endif %}
+    </form>
+  </div>
+{% endblock %}
