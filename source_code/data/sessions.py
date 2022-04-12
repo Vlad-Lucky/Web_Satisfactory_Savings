@@ -23,6 +23,7 @@ class Sessions(SqlAlchemyBase):
     description = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     photo_path = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     is_online = sqlalchemy.Column(sqlalchemy.Boolean, nullable=True)
+    info = sqlalchemy.Column(sqlalchemy.JSON, nullable=True)
 
     creator = orm.relation('Users', primaryjoin='Sessions.creator_id == Users.id')
     last_opener = orm.relation('Users', primaryjoin='Sessions.last_opener_id == Users.id')
