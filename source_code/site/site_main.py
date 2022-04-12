@@ -9,7 +9,7 @@ from flask_wtf import FlaskForm
 from sqlalchemy.orm import Session
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, StopValidation
 
 from source_code.data import db_session
 from source_code.data.savings import Savings
@@ -21,12 +21,12 @@ from source_code.misc.generating_ids import generate_filename
 from source_code.save_parser.bytes_parser import BytesParserSpecializer
 from source_code.save_parser.satisfactory_save_parser import SatisfactorySaveParser
 from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm, SessionsChoosingEditingForm, \
-    SessionsEditForm
+    SessionsEditForm, SessionOnlineForm
 from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
 from source_code.misc.payment_generation import generate_help_project_payload
 from flask_login import current_user, LoginManager, login_user, login_required, logout_user
-from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND
+from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND, SESSION_IS_ALREADY_ONLINE
 
 
 # метод для получения файлов из корневой папки source_code
@@ -71,6 +71,8 @@ def index():
         for name in names:
             session_id = int(name[len('load_saving_inp_'):])
             session = sessions.filter(Sessions.session_id == session_id).first()
+            if session.is_online and session.last_opener_id != current_user.id:
+                return render_template('error.html', **NOT_ALLOWED)
             # сохраняем файл как ненужное
             file = request.files[name]
             saving_path = generate_filename('source_code/db/trash/adding_sessions/savings')
@@ -98,6 +100,55 @@ def index():
             db_sess.commit()
     db_sess.close()
     return render_template('index.html', sessions=sessions)
+
+
+@app.route('/sessions/info/show/<int:session_id>')
+@login_required
+def sessions_info_show(session_id):
+    pass
+
+
+# перевод сессии в оффлайн
+@app.route('/sessions/info/offline/<int:session_id>')
+@login_required
+def sessions_info_offline(session_id):
+    db_sess = db_session.create_session()
+    session = db_sess.query(Sessions).filter(Sessions.session_id == session_id).first()
+    if not session.is_online or session.last_opener_id != current_user.id:
+        db_sess.close()
+        return render_template('error.html', **NOT_ALLOWED)
+    session.is_online = False
+    db_sess.commit()
+    db_sess.close()
+    return redirect('/')
+
+
+# перевод сессии в онлайн
+@app.route('/sessions/info/online/<int:session_id>', methods=['GET', 'POST'])
+@login_required
+def sessions_info_online(session_id):
+    db_sess = db_session.create_session()
+    session = db_sess.query(Sessions).filter(Sessions.session_id == session_id).first()
+    if session.is_online or session.last_opener_id != current_user.id:
+        db_sess.close()
+        return render_template('error.html', **NOT_ALLOWED)
+    form = SessionOnlineForm()
+    if form.validate_on_submit():
+        # сбор информации о сессии
+        info = {'game_session_id': form.game_session_id.data, 'game_session_type': form.game_session_type.data}
+        if form.game_session_type.data == '1':
+            info['owner_platform'] = form.owner_platform.data
+            info['owner_account_name'] = form.owner_account_name.data
+
+        # сохранение информации о сессии
+        session.is_online = True
+        session.last_opener_id = current_user.id
+        session.info = info
+        db_sess.commit()
+        db_sess.close()
+        return redirect('/')
+    db_sess.close()
+    return render_template('sessions_info_set.html', form=form)
 
 
 @app.route('/sessions/edit/<int:session_id>', methods=['GET', 'POST'])

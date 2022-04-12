@@ -15,20 +15,28 @@
               <small class="text-muted">Last upload date: {{session.savings[-1].upload_date.strftime("%Y-%m-%d %H:%M")}}</small>
             </p>
             <div class="btn-group">
-              <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('load_saving_inp_{{session.session_id}}').click()">Load new saving</button>
-              <form action="" enctype="multipart/form-data" method="post" novalidate>
-                <input type="file" name="load_saving_inp_{{session.session_id}}" id="load_saving_inp_{{session.session_id}}" onchange="this.form.submit()" hidden>
-              </form>
+              {% if not session.is_online or (session.is_online and session.last_opener_id == current_user.id) %}
+                <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('load_saving_inp_{{session.session_id}}').click()">Load new saving</button>
+                <form action="" enctype="multipart/form-data" method="post" novalidate>
+                  <input type="file" name="load_saving_inp_{{session.session_id}}" id="load_saving_inp_{{session.session_id}}" onchange="this.form.submit()" hidden>
+                </form>
+              {% endif %}
               <a href="{{url_for('source_code', filename=session.savings[-1].saving_path)}}" download>
                 <button type="button" class="btn btn-sm btn-outline-secondary">Download saving</button>
               </a>
             </div>
             <div class="btn-group">
-              <a href="sessions/info/set/{{session.session_id}}">
-                <button type="button" class="btn btn-sm btn-outline-secondary">Set saving info</button>
-              </a>
+              {% if not session.is_online %}
+                <a href="sessions/info/online/{{session.session_id}}">
+                  <button type="button" class="btn btn-sm btn-outline-secondary">Turn online</button>
+                </a>
+              {% elif session.last_opener_id == current_user.id %}
+                <a href="sessions/info/offline/{{session.session_id}}">
+                  <button type="button" class="btn btn-sm btn-outline-secondary">Turn offline</button>
+                </a>
+              {% endif %}
               <a href="sessions/info/show/{{session.session_id}}">
-                <button type="button" class="btn btn-sm btn-outline-secondary">Show saving info</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary">Show session  info</button>
               </a>
             </div>
             {% if session.creator_id == current_user.id %}

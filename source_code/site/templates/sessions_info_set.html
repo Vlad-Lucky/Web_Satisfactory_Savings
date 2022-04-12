@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    <form action="" method="post" class="container text-center form-center" novalidate>
+      {{form.hidden_tag()}}
+      <h2>Turn session online</h2>
+      <p>
+        {{form.game_session_id(class="form-control", placeholder=form.game_session_id.label.text)}}
+        {% for error in form.game_session_id.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.game_session_type(class="form-control", id="game_session_type", onchange="onchange_game_session_type()")}}
+        {% for error in form.game_session_type.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.owner_platform(class="form-control", id="owner_platform", hidden="true")}}
+        {% for error in form.owner_platform.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>
+        {{form.owner_account_name(class="form-control", placeholder=form.owner_account_name.label.text, id="owner_account_name")}}
+        {% for error in form.owner_account_name.errors %}
+          <div class="alert alert-danger" role="alert">
+            {{error}}
+          </div>
+        {% endfor %}
+      </p>
+      <p>{{form.submit(type="submit", class="btn btn-primary")}}</p>
+    </form>
+  </div>
+  <script>
+    function onchange_game_session_type()
+    {
+      game_session_type = document.getElementById("game_session_type");
+      owner_platform = document.getElementById("owner_platform");
+      owner_account_name = document.getElementById("owner_account_name");
+      if (game_session_type.value == 1)
+      {
+        owner_platform.removeAttribute("hidden");
+        owner_account_name.removeAttribute("hidden");
+        owner_platform.style.visibility = "visible";
+        owner_account_name.style.visibility = "visible";
+      }
+      else
+      {
+        owner_platform.hidden = true;
+        owner_account_name.hidden = true;
+        owner_platform.style.visibility = "hidden";
+        owner_account_name.style.visibility = "hidden";
+      }
+    }
+    window.onload = onchange_game_session_type;
+  </script>
+{% endblock %}
