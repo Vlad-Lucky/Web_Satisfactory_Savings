@@ -1,5 +1,7 @@
 import os
 import shutil
+
+import flask
 from sqlalchemy.orm import Session
 from source_code.data import db_session
 from flask.helpers import get_root_path
@@ -12,10 +14,10 @@ from flask import redirect, send_from_directory
 from flask import Flask, render_template, request
 from source_code.data.privileges import Privileges
 from source_code.misc.generating_ids import generate_filename
+from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND
 from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
 from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.misc.payment_generation import generate_help_project_payload
-from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND, SESSION_IS_OFFLINE
 from source_code.save_parser.satisfactory_save_parser import SatisfactorySaveParser
 from flask_login import current_user, LoginManager, login_user, login_required, logout_user
 from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm, SessionsChoosingEditingForm, \
@@ -55,7 +57,6 @@ def index():
     db_sess = db_session.create_session()
     sessions = db_sess.query(Sessions)
     sessions_ids = [session.session_id for session in sessions]
-    errors = []
     if request.method == 'POST':
         # получение тега name у file_input`ов, id сессий которых ЕСТЬ в активных сессиях
         names = [elem for elem in request.files
@@ -68,21 +69,20 @@ def index():
                 return render_template('error.html', **NOT_ALLOWED)
             # сохраняем файл как ненужное
             file = request.files[name]
-            saving_path = generate_filename('source_code/db/trash/adding_sessions/savings')
+            saving_path = generate_filename('source_code/db/trash/adding_sessions/savings', '.sav')
             file.save(saving_path)
             # проверка на правильность сохранения
             sav_parser1 = SatisfactorySaveParser(session.savings[-1].saving_path)
             sav_parser2 = SatisfactorySaveParser(saving_path)
             if not sav_parser2.is_correct_save():
-                errors.append({'session_id': session_id, 'text': 'Sav file is incorrect'})
+                flask.flash('Sav file is incorrect', category='error')
                 break
             if not sav_parser1.is_next_save(saving_path):
-                errors.append(
-                    {'session_id': session_id,
-                     'text': 'Seems like you were not playing on this save or save is not the next after current'})
+                flask.flash('Seems like you were not playing on this save or save is not the next after current',
+                            category='error')
                 break
             # если всё нормально, то перемещаем его
-            new_saving_path = generate_filename('source_code/db/all_savings/savings')
+            new_saving_path = generate_filename('source_code/db/all_savings/savings', '.sav')
             shutil.move(saving_path, new_saving_path)
             # добавляем сессию в активные
             saving = Savings(owner_id=current_user.id, saving_path=new_saving_path)
@@ -91,6 +91,8 @@ def index():
 
             session.savings.append(saving)
             db_sess.commit()
+
+            flask.flash('Saving was successfully loaded', category='success')
     db_sess.close()
     return render_template('index.html', sessions=sessions)
 
@@ -116,7 +118,7 @@ def sessions_info_offline(session_id):
 def sessions_info_online(session_id):
     db_sess = db_session.create_session()
     session = db_sess.query(Sessions).filter(Sessions.session_id == session_id).first()
-    if session.is_online or session.last_opener_id != current_user.id:
+    if session.is_online:
         db_sess.close()
         return render_template('error.html', **NOT_ALLOWED)
     form = SessionOnlineForm()
@@ -135,7 +137,7 @@ def sessions_info_online(session_id):
         db_sess.close()
         return redirect('/')
     db_sess.close()
-    return render_template('sessions_info_online.html', form=form)
+    return render_template('sessions_turn_online.html', form=form)
 
 
 @app.route('/sessions/edit/<int:session_id>', methods=['GET', 'POST'])
@@ -210,7 +212,7 @@ def sessions_add():
     form = SessionsAddForm()
     if form.validate_on_submit():
         # сохранение всего как ненужное для промежуточного анализа
-        saving_path = generate_filename('source_code/db/trash/adding_sessions/savings')
+        saving_path = generate_filename('source_code/db/trash/adding_sessions/savings', '.sav')
         form.saving.data.save(saving_path)
 
         photo_path_secured = secure_filename(form.session_photo.data.filename)
@@ -224,7 +226,7 @@ def sessions_add():
             return render_template('sessions_add.html', form=form)
 
         # если всё нормально, то перемещаем их
-        new_saving_path = generate_filename('source_code/db/all_savings/savings')
+        new_saving_path = generate_filename('source_code/db/all_savings/savings', '.sav')
         shutil.move(saving_path, new_saving_path)
         new_photo_path = generate_filename('source_code/db/all_savings/photos', f'{photo_path_secured}')
         shutil.move(photo_path, new_photo_path)

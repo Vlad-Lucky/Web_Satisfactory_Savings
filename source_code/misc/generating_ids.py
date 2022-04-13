@@ -16,7 +16,7 @@ def generate_filename(folder: str, base_filename: str = None):
         file_id = ''
         for _ in range(random.randint(1, FILE_ID_MAX_LEN)):
             file_id += random.choice(FILE_ID_AVAILABLE_SYMBOLS)
-    return os.path.join(folder, f'{file_id}_{base_filename}')
+    return os.path.join(folder, f'{file_id}{base_filename}')
 
 
 # генерирует bill_id

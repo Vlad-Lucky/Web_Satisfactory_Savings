@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/colors.css')}}" />
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}" />
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/sizes.css')}}" />
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/flashed_messages.css')}}" />
     <title>Satisfactory Saver</title>
   </head>
   <body>
@@ -35,6 +36,15 @@
         </div>
       </div>
     </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes no_dots text-center">
+        {% for category, message in messages %}
+          <li class="{{category}}">{{message}}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
     {% block content %}{% endblock %}
     {% if not not_load_help_project_footer %}
       <footer class="border-top border-danger my-2 pt-2 text-muted text-center text-small">

@@ -8,14 +8,11 @@
     margin-left: auto;
     margin-right: auto;
 }
-
-
-.session-card img {
-    max-width: 400px;
-    margin: auto;
+ul.no_dots {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
 }
-
-
 .bd-placeholder-img {
   font-size: 1.125rem;
   text-anchor: middle;
@@ -23,6 +20,18 @@
   -moz-user-select: none;
   user-select: none;
 }
+
+
+.session-card img {
+    max-width: 400px;
+    margin: auto;
+}
+.session_status {
+    width: 400px;
+    margin: auto;
+}
+
+
 
 @media (min-width: 768px) {
   .bd-placeholder-img-lg {

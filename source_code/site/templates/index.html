@@ -5,6 +5,11 @@
     {% for session in sessions %}
       <div class="py-2 col-md-6">
         <div class="card shadow-sm text-center session-card">
+          {% if session.is_online %}
+            <p class="lightgreen black_color session_status">online</p>
+          {% else %}
+            <p class="lightred black_color session_status">offline</p>
+          {% endif %}
           <img width="100%" height="200" src="{{url_for('source_code', filename=session.photo_path)}}">
           <div class="card-body">
             <p>
@@ -18,14 +23,14 @@
                 <b class="text-muted">------------Online info------------</b><br>
                 <small class="text-muted">Last opener`s discord: {{session.last_opener.discord}}</small><br>
                 <small class="text-muted">Last openers`s login: {{session.last_opener.login}}</small><br>
-                <small class="text-muted">Game session id: {{session.info["game_session_id"]}}</small><br>
                 {% if session.info["game_session_type"] == "1" %}
+                  <small class="text-muted">Last opener`s platform: {{session.info["owner_platform"]}}</small><br>
+                  <small class="text-muted">Last opener`s account on this platform: {{session.info["owner_account_name"]}}</small><br>
                   <small class="text-muted">Game session type: Friends only</small><br>
-                  <small class="text-muted">Owner`s platform: {{session.info["owner_platform"]}}</small><br>
-                  <small class="text-muted">Owner`s account on this platform: {{session.info["owner_account_name"]}}</small><br>
                 {% else %}
                   <small class="text-muted">Game session type: Private</small><br>
                 {% endif %}
+                <small class="text-muted">Game session id: {{session.info["game_session_id"]}}</small><br>
               {% endif %}
               <b class="text-muted">------------Saving info------------</b><br>
               <small class="text-muted">Last upload date: {{session.savings[-1].upload_date.strftime("%Y-%m-%d %H:%M")}}</small>
