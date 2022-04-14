@@ -8,6 +8,9 @@ QIWI_PUBLIC_KEY = '<Qiwi public key>'
 QIWI_SECRET_KEY = '<Qiwi secret key>'
 QIWI_TIME_TO_PAY = dt.timedelta(minutes=5)
 
+DISCORD_BOT_TOKEN = '<discord bot token>'
+MAIN_DISCORD_GUILD_ID = 959080015583125564
+
 # prenamed privileges
 PRIVILEGES = ['contributor', 'session_creator']
 
