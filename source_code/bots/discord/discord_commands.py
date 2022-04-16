@@ -7,6 +7,6 @@ class DiscordCommands(commands.Cog):
         self.bot = bot
 
     # получение id сервера/гильдии
-    @commands.command(name='get_guild_id')
-    async def get_guild_id(self, ctx):
+    @commands.command(name='get_server_id')
+    async def get_server_id(self, ctx):
         await ctx.send(f'Server id: {ctx.guild.id}')

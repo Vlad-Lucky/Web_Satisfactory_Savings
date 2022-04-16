@@ -15,7 +15,7 @@ def get_discord_bot() -> DiscordBot:
 
 
 # запуск дискорд бота
-def main():
+def run():
     global __factory
 
     if not __factory:
@@ -25,10 +25,11 @@ def main():
         # запуск бота
         bot = DiscordBot(command_prefix='/', intents=intents)
         bot.add_cog(DiscordCommands(bot))
-        bot.run(DISCORD_BOT_TOKEN)
         # устанавливаем глобальную переменную боту
         __factory = bot
+        # запуск бота
+        bot.run(DISCORD_BOT_TOKEN)
 
 
 if __name__ == '__main__':
-    main()
+    run()

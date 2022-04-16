@@ -12,7 +12,7 @@ from source_code.data.privileges import Privileges
 from flask import redirect, Flask, send_from_directory
 from source_code.misc.generating_ids import generate_filename
 from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND
-from flask_login import current_user, login_user, login_required
+from flask_login import current_user, login_user, login_required, LoginManager, logout_user
 from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.misc.payment_generation import generate_help_project_payload
 from source_code.save_parser.satisfactory_save_parser import SatisfactorySaveParser
@@ -21,13 +21,15 @@ from source_code.site.forms import RegisterForm, SigninForm, SessionsAddForm, Se
 
 
 class SiteUrls:
-    def __init__(self, flask_app: Flask, load_user_session: Session):
+    def __init__(self, flask_app: Flask, load_user_session: Session, login_manager: LoginManager):
         self.app = flask_app
         self.load_user_session = load_user_session
+        self.login_manager = login_manager
 
     def register(self):
         self.app.add_url_rule('/', view_func=self.__index(), methods=['GET', 'POST'], endpoint='')
-        self.app.add_url_rule('/index/', view_func=self.__index(), methods=['GET', 'POST'], endpoint='index')
+        self.app.add_url_rule('/index', view_func=self.__index(), methods=['GET', 'POST'], endpoint='index')
+        self.app.add_url_rule('/logout', view_func=self.__logout())
         self.app.add_url_rule('/sessions/info/offline/<int:session_id>', view_func=self.__sessions_info_offline())
         self.app.add_url_rule('/sessions/info/online/<int:session_id>', view_func=self.__sessions_info_online(),
                               methods=['GET', 'POST'])
@@ -43,6 +45,8 @@ class SiteUrls:
         # добавление правила из корневой папки source_code
         self.app.add_url_rule(f'/source_code/<path:filename>', endpoint='source_code',
                               view_func=self.__source_code_url_rule(self.app))
+        # установка метода получения пользователей
+        self.login_manager.user_loader(self.__load_user())
 
     # метод для получения файлов из корневой папки source_code
     @staticmethod
@@ -105,6 +109,19 @@ class SiteUrls:
             db_sess.close()
             return render_template('index.html', sessions=sessions)
         return index
+
+    def __load_user(self):
+        def load_user(user_id):
+            return self.load_user_session.query(Users).filter(Users.id == user_id).first()
+        return load_user
+
+    @staticmethod
+    def __logout():
+        @login_required
+        def logout():
+            logout_user()
+            return flask.redirect("/")
+        return logout
 
     # перевод сессии в оффлайн
     @staticmethod
