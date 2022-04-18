@@ -8,7 +8,7 @@ __factory = None
 
 
 # получение активного дискорд бота
-def get_discord_bot() -> DiscordBot:
+def get_discord_session() -> DiscordBot:
     if not __factory:
         raise Exception("Необходимо запустить дискорд бота.")
     return __factory

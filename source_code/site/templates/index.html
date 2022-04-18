@@ -62,13 +62,6 @@
             {% endif %}
           </div>
         </div>
-        {% for error in session_errors %}
-          {% if error["session_id"] == session.session_id %}
-            <div class="alert alert-danger" role="alert">
-              {{error["text"]}}
-            </div>
-          {% endif %}
-        {% endfor %}
       </div>
     {% endfor %}
   </div>

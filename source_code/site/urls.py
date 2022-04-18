@@ -1,6 +1,8 @@
 import flask
 import shutil
 from sqlalchemy.orm import Session
+
+from source_code.bots.discord.discord_session import get_discord_session
 from source_code.data import db_session
 from source_code.data.users import Users
 from flask import render_template, request
@@ -11,7 +13,7 @@ from source_code.data.sessions import Sessions
 from source_code.data.privileges import Privileges
 from flask import redirect, Flask, send_from_directory
 from source_code.misc.generating_ids import generate_filename
-from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND
+from source_code.site.site_errors import NOT_ALLOWED, NOT_FOUND, NOT_GUILDER_ERROR, UNAUTHORIZED_ERROR
 from flask_login import current_user, login_user, login_required, LoginManager, logout_user
 from source_code.misc.payment import make_session, QiwiPaymentStatus
 from source_code.misc.payment_generation import generate_help_project_payload
@@ -31,7 +33,7 @@ class SiteUrls:
         self.app.add_url_rule('/index', view_func=self.__index(), methods=['GET', 'POST'], endpoint='index')
         self.app.add_url_rule('/logout', view_func=self.__logout())
         self.app.add_url_rule('/sessions/info/offline/<int:session_id>', view_func=self.__sessions_info_offline())
-        self.app.add_url_rule('/sessions/info/online/<int:session_id>', view_func=self.__sessions_info_online(),
+        self.app.add_url_rule('/sessions/info/online/<int:session_id>', view_func=self.__sessions_turn_online(),
                               methods=['GET', 'POST'])
         self.app.add_url_rule('/sessions/edit/<int:session_id>', view_func=self.__sessions_edit(),
                               methods=['GET', 'POST'])
@@ -70,42 +72,50 @@ class SiteUrls:
             sessions = db_sess.query(Sessions)
             sessions_ids = [session.session_id for session in sessions]
             if request.method == 'POST':
-                # получение тега name у file_input`ов, id сессий которых ЕСТЬ в активных сессиях
-                names = [elem for elem in request.files
-                         if elem.startswith('load_saving_inp_') and elem[len('load_saving_inp_'):].isdigit()
-                         and int(elem[len('load_saving_inp_'):]) in sessions_ids]
-                for name in names:
-                    session_id = int(name[len('load_saving_inp_'):])
-                    session = sessions.filter(Sessions.session_id == session_id).first()
-                    if session.is_online and session.last_opener_id != current_user.id:
-                        return render_template('error.html', **NOT_ALLOWED)
-                    # сохраняем файл как ненужное
-                    file = request.files[name]
-                    saving_path = generate_filename('source_code/db/trash/adding_sessions/savings', '.sav')
-                    file.save(saving_path)
-                    # проверка на правильность сохранения
-                    sav_parser1 = SatisfactorySaveParser(session.savings[-1].saving_path)
-                    sav_parser2 = SatisfactorySaveParser(saving_path)
-                    if not sav_parser2.is_correct_save():
-                        flask.flash('Sav file is incorrect', category='error')
-                        break
-                    if not sav_parser1.is_next_save(saving_path):
-                        flask.flash(
-                            'Seems like you were not playing on this save or save is not the next after current',
-                            category='error')
-                        break
-                    # если всё нормально, то перемещаем его
-                    new_saving_path = generate_filename('source_code/db/all_savings/savings', '.sav')
-                    shutil.move(saving_path, new_saving_path)
-                    # добавляем сессию в активные
-                    saving = Savings(owner_id=current_user.id, saving_path=new_saving_path)
-                    db_sess.add(saving)
-                    db_sess.commit()
+                if current_user.is_authenticated:
+                    # проверка, есть ли пользователь на главном дискорд сервере
+                    is_guilder = get_discord_session().is_guilder(current_user.discord)
+                    if not is_guilder:
+                        flask.flash(NOT_GUILDER_ERROR['error'], category='error')
+                    # получение тега name у file_input`ов, id сессий которых ЕСТЬ в активных сессиях
+                    names = [elem for elem in request.files
+                             if elem.startswith('load_saving_inp_') and elem[len('load_saving_inp_'):].isdigit()
+                             and int(elem[len('load_saving_inp_'):]) in sessions_ids]
+                    for name in names:
+                        session_id = int(name[len('load_saving_inp_'):])
+                        session = sessions.filter(Sessions.session_id == session_id).first()
+                        if session.is_online and session.last_opener_id != current_user.id:
+                            db_sess.close()
+                            return render_template('error.html', **NOT_ALLOWED)
+                        # сохраняем файл как ненужное
+                        file = request.files[name]
+                        saving_path = generate_filename('source_code/db/trash/adding_sessions/savings', '.sav')
+                        file.save(saving_path)
+                        # проверка на правильность сохранения
+                        sav_parser1 = SatisfactorySaveParser(session.savings[-1].saving_path)
+                        sav_parser2 = SatisfactorySaveParser(saving_path)
+                        if not sav_parser2.is_correct_save():
+                            flask.flash('Sav file is incorrect', category='error')
+                            break
+                        if not sav_parser1.is_next_save(saving_path):
+                            flask.flash(
+                                'Seems like you were not playing on this save or save is not the next after current',
+                                category='error')
+                            break
+                        # если всё нормально, то перемещаем его
+                        new_saving_path = generate_filename('source_code/db/all_savings/savings', '.sav')
+                        shutil.move(saving_path, new_saving_path)
+                        # добавляем сессию в активные
+                        saving = Savings(owner_id=current_user.id, saving_path=new_saving_path)
+                        db_sess.add(saving)
+                        db_sess.commit()
 
-                    session.savings.append(saving)
-                    db_sess.commit()
+                        session.savings.append(saving)
+                        db_sess.commit()
 
-                    flask.flash('Saving was successfully loaded', category='success')
+                        flask.flash('Saving was successfully loaded', category='success')
+                else:
+                    flask.flash(UNAUTHORIZED_ERROR['error'], category='error')
             db_sess.close()
             return render_template('index.html', sessions=sessions)
         return index
@@ -141,10 +151,15 @@ class SiteUrls:
 
     # перевод сессии в онлайн
     @staticmethod
-    def __sessions_info_online():
+    def __sessions_turn_online():
         @login_required
         def sessions_info_online(session_id):
             db_sess = db_session.create_session()
+            # проверка, есть ли пользователь на главном дискорд сервере
+            is_guilder = get_discord_session().is_guilder(current_user.discord)
+            if not is_guilder:
+                db_sess.close()
+                return render_template('error.html', **NOT_GUILDER_ERROR)
             session = db_sess.query(Sessions).filter(Sessions.session_id == session_id).first()
             if session.is_online:
                 db_sess.close()
@@ -174,6 +189,10 @@ class SiteUrls:
             if not any([session.session_id == session_id for session in current_user.sessions]):
                 return render_template('error.html', **NOT_ALLOWED)
             changing = request.args.get('changing', default=None, type=str)
+            # проверка, есть ли пользователь на главном дискорд сервере
+            is_guilder = get_discord_session().is_guilder(current_user.discord)
+            if not is_guilder:
+                return render_template('error.html', **NOT_GUILDER_ERROR)
             # если в строке есть запрос, какие данные изменять, то предъявляем форму изменения данных
             if changing is not None:
                 try:
