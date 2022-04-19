@@ -12,7 +12,11 @@ DISCORD_BOT_TOKEN = '<discord bot token>'
 MAIN_DISCORD_GUILD_ID = 959080015583125564
 
 # prenamed privileges
-PRIVILEGES = ['contributor', 'session_creator']
+PRIVILEGES = [{'key_name': 'contributor', 'name': 'Contributor', 'is_displaying': True},
+              {'key_name': 'session_creator', 'name': 'Session Creator', 'is_displaying': True}]
+
+# константы, всегда доступные сайту как **kwargs
+SITE_CONSTANTS = {'PRIVILEGES': PRIVILEGES}
 
 SITE_URL = 'http://127.0.0.1:8080/'
 SITE_SECRET_KEY = '<secret key>'

@@ -5,7 +5,7 @@ from source_code.data import db_session
 from flask.helpers import get_root_path
 from source_code.site.urls import SiteUrls
 from source_code.data.privileges import Privileges
-from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH
+from source_code.constants import SITE_SECRET_KEY, INFO_DB_PATH, PRIVILEGES
 
 
 def run():
@@ -14,10 +14,9 @@ def run():
     if not cond:
         db_sess = db_session.create_session()
 
-        privilege = Privileges(key_name='contributor', name='Contributor', is_displaying=True)
-        db_sess.add(privilege)
-        privilege = Privileges(key_name='session_creator', name='Session Creator', is_displaying=False)
-        db_sess.add(privilege)
+        for privilege in PRIVILEGES:
+            new_privilege = Privileges(**privilege)
+            db_sess.add(new_privilege)
 
         db_sess.commit()
         db_sess.close()

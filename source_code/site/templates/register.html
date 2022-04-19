@@ -13,8 +13,8 @@
         {% endfor %}
       </p>
       <p>
-        {{form.discord_login(class="form-control", placeholder=form.discord_login.label.text)}}
-        {% for error in form.discord_login.errors %}
+        {{form.discord(class="form-control", placeholder=form.discord.label.text)}}
+        {% for error in form.discord.errors %}
           <div class="alert alert-danger" role="alert">
             {{error}}
           </div>

@@ -4,8 +4,8 @@ from source_code.data.users import Users
 
 
 # проверка всех условий, передаются условия так:
-# [[<элемент в форме в str>, <значение, при котором вызывается валидатор>,
-# [<методы-валидаторы, получаемый параметры (form, field)>, ...]], [...]...]
+# [[<элемент в форме в str>, <значение, при котором вызываются валидатор>,
+# [<методы-валидаторы, получаемые параметры (form, field)>, ...]], [...]...]
 def conditions_required(conditions):
     def cmd(form, field):
         for condition in conditions:
@@ -13,6 +13,21 @@ def conditions_required(conditions):
             if value != condition[1]:
                 continue
             for validator in condition[2]:
+                validator(form, field)
+    return cmd
+
+
+# проверка всех условий, передаются условия так:
+# [[<валидатор при значениях (form, field), если он завершается без ошибки ValidationError при котором
+# вызываются последующие валидатор>, [<методы-валидаторы, получаемые параметры (form, field)>, ...]],[...]...]
+def validator_conditions_required(conditions):
+    def cmd(form, field):
+        for condition in conditions:
+            try:
+                condition[0](form, field)
+            except ValidationError:
+                continue
+            for validator in condition[1]:
                 validator(form, field)
     return cmd
 
@@ -39,7 +54,7 @@ def signin_login_validator():
 def signin_discord_validator():
     def cmd(form, field):
         db_sess = db_session.create_session()
-        user = db_sess.query(Users).filter(Users.discord == form.discord_login.data).first()
+        user = db_sess.query(Users).filter(Users.discord == form.discord.data).first()
         if not user or not user.check_password(form.discord_password.data):
             raise ValidationError("Login or password is incorrect")
     return cmd
@@ -67,12 +82,12 @@ def signin_validator():
         if (not signin_login and not signin_discord) or \
                 (not signin_login and form.login_submit.data and field is form.login_password) or\
                 (not signin_discord and form.discord_submit.data and field is form.discord_password):
-            raise ValidationError("Login or password is incorrect")
+            raise ValidationError("Login or discord or password is incorrect")
     return cmd
 
 
 # проверка, зарегестрирован ли уже логин
-def registration_login_validator():
+def login_validator():
     def cmd(form, field):
         db_sess = db_session.create_session()
         user = db_sess.query(Users).filter(Users.login == field.data).first()
@@ -82,7 +97,7 @@ def registration_login_validator():
 
 
 # проверка discord ника на правильность и на то, существует ли он уже
-def registration_discord_validator():
+def discord_validator():
     def cmd(form, field):
         try:
             if field.data.count('#') != 1 or len(field.data.split('#')[-1]) != 4:
@@ -94,12 +109,12 @@ def registration_discord_validator():
         db_sess = db_session.create_session()
         user = db_sess.query(Users).filter(Users.discord == field.data).first()
         if user:
-            raise ValidationError("Such user already exists")
+            raise ValidationError("Such discord is already registered")
     return cmd
 
 
 # проверка на repeat_password
-def registration_password_equal_validator():
+def password_equal_validator():
     def cmd(form, field):
         if form.password.data != form.repeat_password.data:
             raise ValidationError("Passwords are not equal")

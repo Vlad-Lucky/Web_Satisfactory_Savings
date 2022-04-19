@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+  <div>
+    <form enctype="multipart/form-data" action="" method="post" class="container text-center form-center" novalidate>
+      {{form.hidden_tag()}}
+      <h2>Profile of user {{user.id}}</h2>
+      <div class="form-control">
+        {% if current_user.id == user.id %}
+          {% if request.method == "GET" %}
+            <p>Login: {{form.login(value=user.login, placeholder=form.login.label.text)}}</p>
+            <p>Discord: {{form.discord(value=user.discord, placeholder=form.discord.label.text)}}</p>
+          {% else %}
+            <p>Login: {{form.login(placeholder=form.login.label.text)}}</p>
+            <p>Discord: {{form.discord(placeholder=form.discord.label.text)}}</p>
+          {% endif %}
+        {% else %}
+          <p>Login: {{user.login}}</p>
+          <p>Discord: {{user.discord}}</p>
+        {% endif %}
+        <p>Registration date: {{user.registration_date.strftime("%d/%m/%y %H:%M")}}</p>
+        {% if current_user.id == user.id %}
+          <p>{{form.submit(type="submit", class="btn btn-primary")}}</p>
+        {% endif %}
+      </div>
+      {% for error in form.login.errors %}
+        <div class="alert alert-danger" role="alert">
+          {{error}}
+        </div>
+      {% endfor %}
+      {% for error in form.discord.errors %}
+        <div class="alert alert-danger" role="alert">
+          {{error}}
+        </div>
+      {% endfor %}
+    </form>
+  </div>
+{% endblock %}

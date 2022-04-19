@@ -21,13 +21,13 @@
             <strong class="white_color">Satisfactory Saver</strong>
             <nav>
               {% if current_user.is_authenticated %}
-                <div class="row">
-                  <p>{{current_user.login}}</p>&nbsp;
+                <p>
+                  <a class="navbar-brand" href="/profile/{{current_user.id}}">{{current_user.login}}</a>&nbsp;
                   <a class="navbar-brand" href="/logout">Logout</a>
-                </div>
+                </p>
               {% else %}
                 <p>
-                  <a class="btn btn-primary " href="/register">Register</a>
+                  <a class="btn btn-primary" href="/register">Register</a>
                   <a class="btn btn-success" href="/signin">Sign in</a>
                 </p>
               {% endif %}
