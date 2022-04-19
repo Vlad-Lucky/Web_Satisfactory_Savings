@@ -3,7 +3,7 @@
   <div>
     <form enctype="multipart/form-data" action="" method="post" class="container text-center form-center" novalidate>
       {{form.hidden_tag()}}
-      <h2>Profile of user {{user.id}}</h2>
+      <h2>User Profile</h2>
       <div class="form-control">
         {% if current_user.id == user.id %}
           {% if request.method == "GET" %}

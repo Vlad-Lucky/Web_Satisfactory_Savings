@@ -11,7 +11,7 @@
             {% else %}
               <p class="lightred black_color session_status">offline</p>
             {% endif %}
-            <img width="100%" height="200" src="{{url_for('source_code', filename=session.photo_path)}}">
+            <img width="100%" height="200" src="{{url_for('all_savings', filename=session.photo_path.split('all_savings')[1])}}">
             <div class="card-body">
               <p>
                 <b class="text-muted">-------------Card info-------------</b><br>
@@ -43,7 +43,7 @@
                     <input type="file" name="load_saving_inp_{{session.session_id}}" id="load_saving_inp_{{session.session_id}}" onchange="this.form.submit()" hidden>
                   </form>
                 {% endif %}
-                <a href="{{url_for('source_code', filename=session.savings[-1].saving_path)}}" download>
+                <a href="{{url_for('all_savings', filename=session.savings[-1].saving_path.split('all_savings')[1])}}" download>
                   <button type="button" class="btn btn-sm btn-outline-secondary">Download saving</button>
                 </a>
                 {% if not session.is_online %}

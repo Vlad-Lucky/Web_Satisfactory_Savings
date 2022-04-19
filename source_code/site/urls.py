@@ -52,26 +52,24 @@ class SiteUrls:
         self.app.add_url_rule('/help_project', view_func=self.__help_project(), methods=['GET', 'POST'])
         self.app.add_url_rule(
             '/help_project/<bill_id>/<invoice_uid>', view_func=self.__help_project_check(), methods=['GET', 'POST'])
-        # добавление правила из корневой папки source_code
+        # добавление правила для доступа к сохранениям
         self.app.add_url_rule(
-            f'/source_code/<path:filename>', endpoint='source_code', view_func=self.__source_code_url_rule(self.app))
+            f'/all_savings/<path:filename>', endpoint='all_savings', view_func=self.__all_savings_url_rule(self.app))
         # установка метода получения пользователей
         self.login_manager.user_loader(self.__load_user())
 
     # метод для получения файлов из корневой папки source_code
     @staticmethod
-    def __source_code_url_rule(app):
-        def source_code_url_rule(filename, cut_source_code=True):
+    def __all_savings_url_rule(app):
+        def all_savings_url_rule(filename):
             value = app.send_file_max_age_default
             if value is None:
                 max_age = None
             else:
                 max_age = int(value.total_seconds())
             filename = filename.replace('\\', '/')
-            if cut_source_code:
-                filename = filename.lstrip('source_code').lstrip('/')
-            return send_from_directory('', filename, max_age=max_age)
-        return source_code_url_rule
+            return send_from_directory('db/all_savings', filename, max_age=max_age)
+        return all_savings_url_rule
 
     @staticmethod
     def __index():
@@ -351,7 +349,6 @@ class SiteUrls:
             if form.validate_on_submit():
                 if not current_user.is_authenticated or current_user.id != user_id:
                     return render_template('error.html', **NOT_ALLOWED)
-                print('eeee')
                 current_user.login = form.login.data
                 current_user.discord = form.discord.data
                 load_user_session.commit()
