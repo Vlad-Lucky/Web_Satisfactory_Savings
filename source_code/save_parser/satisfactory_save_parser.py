@@ -17,6 +17,10 @@ class SatisfactorySaveParser:
     def get_order(self) -> int:
         return 1
 
+    # получение id сессии
+    def get_session_id(self) -> int:
+        return 1
+
     # установить следующий шифрованный порядковый номер для сохранения
     def next_order(self):
         pass
@@ -35,3 +39,7 @@ class SatisfactorySaveParser:
 
     def save(self, file_path: str = None):
         self.bytes_parser.save(file_path)
+
+    # сбрасывание порядкового номера (становится равным 1) и установка session_id
+    def reset(self, session_id: int):
+        pass
