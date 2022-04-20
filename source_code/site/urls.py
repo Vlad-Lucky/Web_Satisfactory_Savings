@@ -312,7 +312,7 @@ class SiteUrls:
                 session = Sessions(session_id=session_id, creator_id=current_user.id,
                                    description=form.session_description.data,
                                    photo_path=new_photo_path, name=form.session_name.data,
-                                   is_active=True)
+                                   is_active=True, is_online=False)
                 session.savings.append(saving)
                 db_sess.add(session)
                 db_sess.commit()
