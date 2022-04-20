@@ -7,11 +7,9 @@ from source_code.save_parser.bytes_parser import BytesParserSpecializer
 
 
 class SatisfactorySaveParser:
-    def __init__(self, save_file: str, is_new_save=False):
+    def __init__(self, save_file: str):
         self.bytes_parser = None
         self.set_save(save_file)
-        if is_new_save:
-            pass
 
     # получение порядкового номера у сохранения
     def get_order(self) -> int:
