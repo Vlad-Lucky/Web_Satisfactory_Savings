@@ -295,17 +295,22 @@ class SiteUrls:
                 if not sav_parser.is_correct_save():
                     form.saving.errors.append('Sav file is incorrect')
                     return render_template('sessions_add.html', form=form)
+                db_sess = db_session.create_session()
+                session_id = max([elem.session_id for elem in db_sess.query(Sessions)]) + 1
+                # преведение sav_parser к базовым настрйокам
+                sav_parser.reset(session_id)
+                sav_parser.save(saving_path)
                 # если всё нормально, то перемещаем их
                 new_saving_path = generate_filename('source_code/db/all_savings/savings', '.sav')
                 shutil.move(saving_path, new_saving_path)
                 new_photo_path = generate_filename('source_code/db/all_savings/photos', f'{photo_path_secured}')
                 shutil.move(photo_path, new_photo_path)
                 # добавляем сессию в активные
-                db_sess = db_session.create_session()
                 saving = Savings(owner_id=current_user.id, saving_path=new_saving_path)
                 db_sess.add(saving)
                 db_sess.commit()
-                session = Sessions(creator_id=current_user.id, description=form.session_description.data,
+                session = Sessions(session_id=session_id, creator_id=current_user.id,
+                                   description=form.session_description.data,
                                    photo_path=new_photo_path, name=form.session_name.data,
                                    is_active=True)
                 session.savings.append(saving)
