@@ -437,7 +437,7 @@ class SiteUrls:
                             user.privileges.append(privilege_contributor)
                             db_sess.commit()
                             db_sess.close()
-                            payload_message += '. You have already got the role in discord.'
+                            payload_message += '. You will get the role in discord in one minute.'
                 return render_template(
                     'help_project.html', action='check',
                     payload=f'https://oplata.qiwi.com/form/?invoice_uid={invoice_uid}',
