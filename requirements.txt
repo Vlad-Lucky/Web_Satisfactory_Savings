@@ -1,0 +1,9 @@
+discord~=1.7.3
+SQLAlchemy~=1.4.32
+rsa~=4.8
+requests~=2.27.1
+Flask~=2.1.0
+Werkzeug~=2.0.3
+WTForms~=3.0.1
+flask_login
+flask_wtf
