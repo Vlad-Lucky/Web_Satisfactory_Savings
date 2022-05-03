@@ -29,8 +29,10 @@ class DiscordCommands(commands.Cog):
             db_sess = db_session.create_session()
         except TypeError:
             return
-        all_privileges_names = [privilege.name for privilege in db_sess.query(Privileges)]
         guild = self.bot.get_guild(MAIN_DISCORD_GUILD_ID)
+        if guild is None:
+            return
+        all_privileges_names = [privilege.name for privilege in db_sess.query(Privileges)]
         discord_roles = {role.name: role for role in guild.roles}
 
         for member in guild.members:

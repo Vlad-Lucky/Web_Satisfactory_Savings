@@ -296,7 +296,11 @@ class SiteUrls:
                     form.saving.errors.append('Sav file is incorrect')
                     return render_template('sessions_add.html', form=form)
                 db_sess = db_session.create_session()
-                session_id = max([elem.session_id for elem in db_sess.query(Sessions)]) + 1
+                sessions = db_sess.query(Sessions)
+                if len(sessions.all()) != 0:
+                    session_id = max([elem.session_id for elem in sessions]) + 1
+                else:
+                    session_id = 1
                 # преведение sav_parser к базовым настрйокам
                 sav_parser.reset(session_id)
                 sav_parser.save(saving_path)

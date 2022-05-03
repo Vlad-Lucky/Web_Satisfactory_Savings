@@ -11,5 +11,7 @@ class DiscordBot(BotBase, discord.Client):
     # проверка, находится ли пользователь в формате <name>#<discriminator> на главном сервере
     def is_guilder(self, discord_login) -> bool:
         guild = self.get_guild(MAIN_DISCORD_GUILD_ID)
+        if guild is None:
+            return False
         members = [f'{member.name}#{member.discriminator}' for member in guild.members]
         return discord_login in members
